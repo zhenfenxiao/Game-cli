@@ -41,6 +41,8 @@ def compute_diff(original: str, modified: str, fromfile: str = "original", tofil
 def apply_patch(original: str, patch: str) -> str:
     """Apply a unified diff patch to original text.
 
+    Parses unified diff hunks and applies additions/removals manually.
+
     Args:
         original: Original text content.
         patch: Unified diff patch string.
@@ -51,18 +53,55 @@ def apply_patch(original: str, patch: str) -> str:
     Raises:
         ValueError: If the patch cannot be applied cleanly.
     """
-    original_lines = original.splitlines(keepends=True)
-    patch_lines = patch.splitlines(keepends=True)
+    if not patch.strip():
+        return original
 
-    # Ensure original lines end with newline
-    if original_lines and not original_lines[-1].endswith("\n"):
-        original_lines[-1] += "\n"
+    original_lines = original.splitlines()
+    patch_lines = patch.splitlines()
 
-    try:
-        result = list(difflib.restore(patch_lines, 1))  # 1 = from original
-        return "".join(result)
-    except (ValueError, IndexError) as e:
-        raise ValueError(f"Failed to apply patch: {e}") from e
+    result = list(original_lines)
+    hunk_offset = 0  # Tracks net position change from prior hunks
+
+    # Parse hunks
+    i = 0
+    while i < len(patch_lines):
+        line = patch_lines[i]
+
+        # Skip header lines
+        if line.startswith("---") or line.startswith("+++"):
+            i += 1
+            continue
+
+        # Parse hunk header: @@ -start,count +start,count @@
+        if line.startswith("@@"):
+            parts = line.split()
+            orig_info = parts[1]  # e.g., "-1,3"
+            orig_start = int(orig_info[1:].split(",")[0])
+            result_idx = orig_start - 1 + hunk_offset
+            i += 1
+
+            while i < len(patch_lines):
+                hunk_line = patch_lines[i]
+                if hunk_line.startswith("@@"):
+                    break  # Next hunk
+
+                if hunk_line.startswith(" "):
+                    result_idx += 1
+                elif hunk_line.startswith("-"):
+                    if 0 <= result_idx < len(result):
+                        result.pop(result_idx)
+                        hunk_offset -= 1
+                elif hunk_line.startswith("+"):
+                    result.insert(result_idx, hunk_line[1:])
+                    result_idx += 1
+                    hunk_offset += 1
+                # Skip other lines (like "\\ No newline...")
+
+                i += 1
+        else:
+            i += 1
+
+    return "\n".join(result) + "\n"
 
 
 def validate_search_replace(content: str, old: str, new: str) -> tuple[bool, str]:
