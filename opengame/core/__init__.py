@@ -15,6 +15,7 @@ from opengame.core.tool_output_summarizer import ToolOutputSummarizer
 from opengame.core.tool_output_truncator import ToolOutputTruncator
 from opengame.core.tool_registry import ToolRegistry
 from opengame.core.tool_scheduler import execute_all
+from opengame.core.turn_loop import TurnLoop
 
 __all__ = [
     "AgentContext",
@@ -32,5 +33,6 @@ __all__ = [
     "CompressionStatus",
     "ToolOutputSummarizer",
     "ToolOutputTruncator",
+    "TurnLoop",
     "execute_all",
 ]
