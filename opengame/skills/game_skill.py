@@ -88,24 +88,41 @@ class GameSkill:
         root = Path(output_dir).resolve()
         start_time = time.monotonic()
 
+        def _log(msg: str) -> None:
+            from rich.console import Console
+            Console().print(msg)
+
         try:
             # Phase 1: Classify and scaffold
+            _log("[bold cyan]Phase 1/6[/] Classifying & scaffolding...")
             archetype = self._phase_1_classify_and_scaffold(prompt, root)
+            _log(f"  → Archetype: [green]{archetype}[/green]")
 
             # Phase 2: Generate GDD
+            _log("[bold cyan]Phase 2/6[/] Generating Game Design Document...")
             gdd = await self._phase_2_generate_gdd(prompt, archetype, root)
+            _log(f"  → GDD: [green]{gdd.title}[/green] ({len(gdd.sections)} sections)")
 
-            # Phase 3: Generate assets (stub)
+            # Phase 3: Generate assets
+            _log("[bold cyan]Phase 3/6[/] Generating assets...")
             assets = await self._phase_3_generate_assets(gdd, root)
+            _log(f"  → Assets: [green]{len(assets)} generated[/green]")
 
             # Phase 4: Config and registration
+            _log("[bold cyan]Phase 4/6[/] Updating config & registration...")
             self._phase_4_config_and_registration(gdd, archetype, root)
+            _log("  → [green]Done[/green]")
 
-            # Phase 5: Code implementation (delegate to TurnLoop)
+            # Phase 5: Code implementation
+            _log("[bold cyan]Phase 5/6[/] Implementing game code (TurnLoop agent)...")
             await self._phase_5_implement_code(prompt, gdd, archetype, root)
+            _log("  → [green]Implementation complete[/green]")
 
             # Phase 6: Debug and verification
+            _log("[bold cyan]Phase 6/6[/] Debugging & verifying...")
             debug_result = await self._phase_6_debug(root)
+            _log(f"  → {'[green]PASSED[/green]' if debug_result.success else '[yellow]FAILED[/yellow]'} "
+                 f"({debug_result.trace.total_iterations} iterations)")
 
             elapsed_ms = int((time.monotonic() - start_time) * 1000)
 

@@ -104,7 +104,9 @@ def generate(
         f"[bold]OpenGame v{__version__}[/bold]\n"
         f"Prompt: [cyan]{prompt}[/cyan]\n"
         f"Output: {output_dir}\n"
-        f"Model: [cyan]{model}[/cyan]",
+        f"Model: [cyan]{config.llm.model}[/cyan]\n"
+        f"Image: [yellow]{config.image.provider if config.image else 'none'}[/yellow]\n"
+        f"Audio: [yellow]{config.audio.provider if config.audio else 'none'}[/yellow]",
         title="Game Generation",
     ))
 
@@ -121,4 +123,4 @@ def generate(
     else:
         console.print(f"\n[red]✗ Game generation failed[/red]")
         if result.error:
-            console.print(f"  Error: {result.error}")
+            console.print(f"  [red]Error:[/red] {result.error}")
