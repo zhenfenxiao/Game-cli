@@ -41,13 +41,13 @@ Collect（采集文件）
 
 ```bash
 # 从成品游戏进化模板库
-python -m opengame evolve ./path-to-completed-game
+opengame evolve ./path-to-completed-game
 
 # 预览模式（不写入）
-python -m opengame evolve ./path-to-completed-game --dry-run
+opengame evolve ./path-to-completed-game --dry-run
 
 # 指定模板库路径
-python -m opengame evolve ./my-game --library ./my-templates
+opengame evolve ./my-game --library ./my-templates
 ```
 
 ### 5 种游戏原型
@@ -96,13 +96,13 @@ UNTIL 全部通过 OR max_iterations 达到
 
 ```bash
 # 调试游戏项目
-python -m opengame debug ./my-game
+opengame debug ./my-game
 
 # 自动修复模式
-python -m opengame debug ./my-game --auto-fix
+opengame debug ./my-game --auto-fix
 
 # 限制迭代次数
-python -m opengame debug ./my-game --max-iterations 10
+opengame debug ./my-game --max-iterations 10
 ```
 
 ### 核心组件
@@ -177,10 +177,10 @@ python -m opengame debug ./my-game --max-iterations 10
 
 ```bash
 # 生成游戏
-python -m opengame generate -p "Build a Snake clone with WASD controls"
+opengame generate -p "Build a Snake clone with WASD controls"
 
 # 指定输出目录和模型
-python -m opengame generate -p "A platformer with double jump" \
+opengame generate -p "A platformer with double jump" \
     -o ./my-game -m deepseek-v4-pro
 ```
 

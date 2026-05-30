@@ -32,7 +32,7 @@ OPENGAME_AUDIO_API_KEY=sk-xxxxxx
 ### 验证配置
 
 ```bash
-python -m opengame config show
+opengame config show
 ```
 
 ---

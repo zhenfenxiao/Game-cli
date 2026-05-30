@@ -34,7 +34,7 @@ OPENGAME_IMAGE_API_KEY=sk-your-key-here
 路径：`~/.opengame/settings.json`
 
 ```bash
-python -m opengame config init   # 创建配置文件模板
+opengame config init   # 创建配置文件模板
 ```
 
 ```json
@@ -149,8 +149,8 @@ python -m opengame config init   # 创建配置文件模板
 ## 查看和验证
 
 ```bash
-python -m opengame config show              # 格式化输出
-python -m opengame config show --raw        # JSON 格式
-python -m opengame config validate          # 检查配置完整性
-python -m opengame config init              # 创建全局配置文件
+opengame config show              # 格式化输出
+opengame config show --raw        # JSON 格式
+opengame config validate          # 检查配置完整性
+opengame config init              # 创建全局配置文件
 ```

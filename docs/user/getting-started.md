@@ -17,7 +17,13 @@ cd OpenGame
 uv venv
 source .venv/bin/activate
 uv pip install -e ".[dev]"
+
+# 激活后 opengame 命令全局可用
+source .venv/bin/activate
+opengame --version
 ```
+
+> `uv pip install -e` 自动注册了 `opengame` 入口点。如果不想每次 `source`，可以 `uv tool install -e .` 全局安装。
 
 ## 最快开始：使用 .env 配置
 
@@ -30,7 +36,7 @@ uv pip install -e ".[dev]"
 #    （LLM 必需，Image/Audio 可选）
 
 # 2. 验证配置
-python -m opengame config show
+opengame config show
 ```
 
 ### .env 文件关键配置
@@ -57,10 +63,10 @@ OPENGAME_IMAGE_API_KEY=sk-your-key-here
 ## 验证安装
 
 ```bash
-python -m opengame --version     # opengame v0.6.0
-python -m opengame --help        # 查看所有命令
-python -m opengame config show   # 查看当前生效的配置
-python -m opengame config validate  # 检查配置完整性
+opengame --version     # opengame v0.6.0
+opengame --help        # 查看所有命令
+opengame config show   # 查看当前生效的配置
+opengame config validate  # 检查配置完整性
 ```
 
 ## 可用命令
@@ -78,7 +84,7 @@ python -m opengame config validate  # 检查配置完整性
 
 ```bash
 # 需要有模板目录和 LLM API key
-python -m opengame generate -p "Build a simple Snake clone with WASD controls"
+opengame generate -p "Build a simple Snake clone with WASD controls"
 ```
 
 ## 运行测试

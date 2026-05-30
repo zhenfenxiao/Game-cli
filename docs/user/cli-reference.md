@@ -1,11 +1,11 @@
 # CLI 命令参考
 
-OpenGame 提供命令行接口，通过 `python -m opengame` 调用。
+OpenGame 提供命令行接口，通过 `opengame` 调用。
 
 ## 全局选项
 
 ```
-python -m opengame [全局选项] <命令> [命令选项]
+opengame [全局选项] <命令> [命令选项]
 ```
 
 | 选项 | 简写 | 默认值 | 说明 |
@@ -28,10 +28,10 @@ python -m opengame [全局选项] <命令> [命令选项]
 显示当前生效的完整配置（合并所有来源）。
 
 ```bash
-python -m opengame config show
+opengame config show
 
 # JSON 格式输出
-python -m opengame config show --raw
+opengame config show --raw
 ```
 
 输出示例：
@@ -65,7 +65,7 @@ Game Skill:
 创建用户配置文件模板（`~/.opengame/settings.json`）。
 
 ```bash
-python -m opengame config init
+opengame config init
 ```
 
 #### config validate
@@ -73,7 +73,7 @@ python -m opengame config init
 检查配置完整性，报告缺失的 API 密钥和其他问题。
 
 ```bash
-python -m opengame config validate
+opengame config validate
 ```
 
 ---
@@ -83,13 +83,13 @@ python -m opengame config validate
 从自然语言提示词生成完整网页游戏（6-phase pipeline）。
 
 ```bash
-python -m opengame generate -p "Build a Snake clone with WASD controls and a dark theme"
+opengame generate -p "Build a Snake clone with WASD controls and a dark theme"
 
 # 指定输出目录
-python -m opengame generate -p "A platformer game" -o ./my-game
+opengame generate -p "A platformer game" -o ./my-game
 
 # 指定模型
-python -m opengame generate -p "..." -m gpt-4o-mini
+opengame generate -p "..." -m gpt-4o-mini
 ```
 
 | 选项 | 简写 | 说明 |
@@ -109,13 +109,13 @@ python -m opengame generate -p "..." -m gpt-4o-mini
 诊断和修复游戏项目中的构建和运行错误（Algorithm 1 REPEAT...UNTIL）。
 
 ```bash
-python -m opengame debug ./my-game
+opengame debug ./my-game
 
 # 自动修复模式
-python -m opengame debug ./my-game --auto-fix
+opengame debug ./my-game --auto-fix
 
 # 限制调试迭代次数
-python -m opengame debug ./my-game --max-iterations 10
+opengame debug ./my-game --max-iterations 10
 ```
 
 | 选项 | 简写 | 说明 |
@@ -134,13 +134,13 @@ python -m opengame debug ./my-game --max-iterations 10
 从已有游戏项目学习并进化模板库。（Phase 3 实现）
 
 ```bash
-python -m opengame evolve ./my-game
+opengame evolve ./my-game
 
 # 预览模式（不写入）
-python -m opengame evolve ./my-game --dry-run
+opengame evolve ./my-game --dry-run
 
 # 指定模板库路径
-python -m opengame evolve ./my-game --library ./my-templates
+opengame evolve ./my-game --library ./my-templates
 ```
 
 | 选项 | 简写 | 说明 |
