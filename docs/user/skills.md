@@ -181,7 +181,7 @@ python -m opengame generate -p "Build a Snake clone with WASD controls"
 
 # 指定输出目录和模型
 python -m opengame generate -p "A platformer with double jump" \
-    -o ./my-game -m deepseek-chat
+    -o ./my-game -m deepseek-v4-pro
 ```
 
 ---

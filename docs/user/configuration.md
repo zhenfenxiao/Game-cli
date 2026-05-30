@@ -14,7 +14,7 @@ CLI 参数 > 环境变量 > 项目设置 > 用户设置 > 内置默认值
 # LLM（必需）
 OPENAI_API_KEY=sk-your-key-here
 OPENAI_BASE_URL=https://api.deepseek.com
-OPENAI_MODEL=deepseek-chat
+OPENAI_MODEL=deepseek-v4-pro
 
 # 图片生成（可选，Tongyi 已验证可用）
 OPENGAME_IMAGE_PROVIDER=tongyi

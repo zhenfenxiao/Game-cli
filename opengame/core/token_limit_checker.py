@@ -27,7 +27,7 @@ MODEL_OUTPUT_LIMITS: dict[str, int] = {
     "claude-3.5-sonnet": 8_192,
     "claude-sonnet-4": 16_384,
     "claude-opus-4": 16_384,
-    "deepseek-chat": 8_192,
+    "deepseek-v4": 8_192,
     "deepseek-reasoner": 8_192,
 }
 

@@ -28,7 +28,7 @@ _MODEL_TOKEN_LIMITS: dict[str, int] = {
     "claude-sonnet-4": 200_000,
     "claude-haiku-4.5": 200_000,
     # DeepSeek
-    "deepseek-chat": 128_000,
+    "deepseek-v4": 128_000,
     "deepseek-reasoner": 64_000,
     # DashScope (Qwen)
     "qwen-turbo": 131_072,

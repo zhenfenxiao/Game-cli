@@ -18,7 +18,7 @@ OpenGame 的 API 配置支持 3 种方式，优先级从高到低：
 # LLM — 驱动 agent 主循环
 OPENAI_API_KEY=sk-xxxxxx
 OPENAI_BASE_URL=https://api.deepseek.com
-OPENAI_MODEL=deepseek-chat
+OPENAI_MODEL=deepseek-v4-pro
 
 # 图片生成 — 游戏精灵和背景
 OPENGAME_IMAGE_PROVIDER=tongyi
@@ -43,7 +43,7 @@ LLM 是**必需**的，驱动整个 agent 的游戏生成能力。
 
 | Provider | 说明 | 兼容 API | 测试状态 |
 |----------|------|----------|----------|
-| `deepseek` | DeepSeek | OpenAI-compat | ✅ `deepseek-chat` 可用 |
+| `deepseek` | DeepSeek | OpenAI-compat | ✅ `deepseek-v4-pro` 可用 |
 | `openai` | OpenAI 官方 | OpenAI 原生 | 待验证 |
 | `openrouter` | OpenRouter | OpenAI-compat | 待验证 |
 | `anthropic` | Anthropic Claude | 独立 API | 待验证 |
@@ -53,7 +53,7 @@ LLM 是**必需**的，驱动整个 agent 的游戏生成能力。
 # DeepSeek（.env 示例）
 OPENAI_API_KEY=sk-xxxxxx
 OPENAI_BASE_URL=https://api.deepseek.com
-OPENAI_MODEL=deepseek-chat
+OPENAI_MODEL=deepseek-v4-pro
 
 # OpenAI 官方
 OPENAI_API_KEY=sk-xxxxxx
@@ -138,7 +138,7 @@ OPENGAME_AUDIO_MODEL=tts-1   # 或 tts-1-hd
 OPENGAME_REASONING_PROVIDER=openai-compat
 OPENGAME_REASONING_API_KEY=sk-xxxxxx
 OPENGAME_REASONING_BASE_URL=https://api.deepseek.com
-OPENGAME_REASONING_MODEL=deepseek-chat
+OPENGAME_REASONING_MODEL=deepseek-v4-pro
 ```
 
 ---
@@ -149,7 +149,7 @@ OPENGAME_REASONING_MODEL=deepseek-chat
 
 model name 不对。尝试：
 ```bash
-OPENAI_MODEL=deepseek-chat   # DeepSeek
+OPENAI_MODEL=deepseek-v4-pro   # DeepSeek
 OPENAI_MODEL=gpt-4o          # OpenAI
 ```
 

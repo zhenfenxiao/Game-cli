@@ -44,7 +44,7 @@ class TestGetModelTokenLimit:
 
     def test_known_deepseek_model(self) -> None:
         """DeepSeek models return specific limits."""
-        assert get_model_token_limit("deepseek-chat") == 128_000
+        assert get_model_token_limit("deepseek-v4-pro") == 128_000
 
     def test_fuzzy_match(self) -> None:
         """Model names containing known keys are matched."""

@@ -39,7 +39,7 @@ python -m opengame config show
 # LLM（必需）— 驱动整个 agent
 OPENAI_API_KEY=sk-your-key-here
 OPENAI_BASE_URL=https://api.deepseek.com    # 或其他 OpenAI 兼容 API
-OPENAI_MODEL=deepseek-chat
+OPENAI_MODEL=deepseek-v4-pro
 
 # 图片生成（可选）— 生成游戏精灵和背景
 OPENGAME_IMAGE_PROVIDER=tongyi
