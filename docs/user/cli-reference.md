@@ -100,7 +100,7 @@ python -m opengame generate -p "..." -m gpt-4o-mini
 | `--model` | `-m` | LLM 模型 |
 | `--verbose` | — | 详细输出 |
 
-> **当前状态**：命令已注册，但显示"尚未实现"。将在 Phase 5 完成。
+> **当前状态（Phase 3）**：✅ 完整 6-phase pipeline 已实现。资产生成（Phase 3）为 stub，等待 Phase 4 完成。
 
 ---
 
@@ -125,11 +125,11 @@ python -m opengame debug ./my-game --max-iterations 10
 | `--auto-fix` | `-y` | 自动应用修复 |
 | `--verbose` | — | 详细输出 |
 
-> **当前状态**：命令已注册，但显示"尚未实现"。将在 Phase 3 完成。
+> **当前状态（Phase 3）**：✅ Algorithm 1 REPEAT...UNTIL 循环已实现。支持自动诊断和修复构建/测试错误。
 
 ---
 
-### evolve — 模板进化 🚧
+### evolve — 模板进化 ✅
 
 从已有游戏项目学习并进化模板库。（Phase 3 实现）
 
@@ -150,7 +150,7 @@ python -m opengame evolve ./my-game --library ./my-templates
 | `--dry-run` | — | 预览变更，不实际写入 |
 | `--verbose` | — | 详细输出 |
 
-> **当前状态**：命令已注册，但显示"尚未实现"。将在 Phase 3 完成。
+> **当前状态（Phase 3）**：✅ 完整的 Collect→Classify→Extract→Abstract→Merge→Save 管道已实现。支持 dry-run 预览。
 
 ---
 

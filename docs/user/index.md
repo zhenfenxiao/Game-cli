@@ -10,11 +10,15 @@
 
 ## 文档状态
 
-当前文档覆盖 Phase 1 已实现的功能：
+当前文档覆盖 Phase 1-3 已实现的功能：
 
 - ✅ 安装和项目设置
 - ✅ 配置系统（config show / init / validate）
-- ✅ CLI 接口（4 个子命令已注册）
-- 🚧 generate / debug / evolve 命令（已注册，待实现）
+- ✅ CLI 接口（4 个子命令全部可用）
+- ✅ generate — 6-phase 游戏生成管道（Phase 3 资产生成 stub）
+- ✅ debug — Algorithm 1 REPEAT...UNTIL 调试循环
+- ✅ evolve — 模板库进化（采集→分类→提取→抽象→合并→保存）
+- ✅ Template Skill（7 组件）和 Debug Skill（8 组件）
+- 🚧 Phase 4（Asset Pipeline）资产管线
 
 后续阶段完成后将持续更新文档。
