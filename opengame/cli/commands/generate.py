@@ -1,7 +1,6 @@
 """Generate command — create a game from a natural language prompt.
 
-This is a placeholder stub. The full 6-phase pipeline will be
-implemented in Phase 5.
+Wires the full 6-phase GameSkill pipeline to the CLI.
 """
 
 from __future__ import annotations
@@ -10,6 +9,16 @@ from pathlib import Path
 
 import typer
 from rich.console import Console
+from rich.panel import Panel
+
+from opengame import __version__
+from opengame.cli.config_loader import ConfigLoader
+from opengame.core.openai_client import OpenAiClient
+from opengame.skills.debug_skill import DebugSkill, ProtocolManager
+from opengame.skills.game_skill import GameSkill
+from opengame.skills.template_skill import TemplateSkill
+from opengame.skills.template_skill.library_manager import LibraryManager
+from opengame.tools.factory import create_tool_registry
 
 app = typer.Typer(help="Generate a game from a natural language prompt")
 console = Console()
@@ -46,17 +55,63 @@ def generate(
         help="Enable verbose output",
     ),
 ) -> None:
-    """Generate a complete web game from a natural language prompt.
+    """Generate a complete web game from a natural language prompt."""
+    # Load config
+    loader = ConfigLoader()
+    loader.set_cli_override("llm.model", model)
+    loader.set_cli_override("approval_mode", approval_mode)
+    config = loader.load()
 
-    Example:
-        opengame generate -p "Build a Snake clone with WASD controls and a dark theme"
-    """
-    console.print(f"[bold]Game Generation[/bold]")
-    console.print(f"  Prompt: [cyan]{prompt}[/cyan]")
-    console.print(f"  Output: {output_dir}")
-    console.print(f"  Model: [cyan]{model}[/cyan]")
-    console.print(f"  Approval: [yellow]{approval_mode}[/yellow]")
-    console.print()
-    console.print(
-        "[yellow]Game generation is not yet implemented. Coming in Phase 5.[/yellow]"
+    # Initialize LLM client
+    llm_client = OpenAiClient(
+        model=config.llm.model,
+        base_url=config.llm.base_url,
+        api_key=config.llm.api_key,
+        timeout=config.llm.timeout,
     )
+
+    # Initialize skills
+    library_manager = LibraryManager(config.game_skill.library_output_dir)
+    template_skill = TemplateSkill(llm_client, library_manager)
+
+    protocol_manager = ProtocolManager(config.game_skill.protocol_output_dir)
+    debug_skill = DebugSkill(
+        llm_client,
+        protocol_manager,
+        max_iterations=config.game_skill.max_debug_iterations,
+    )
+
+    # Initialize TurnLoop with tools
+    tool_registry = create_tool_registry(llm_client=llm_client)
+
+    # Build the GameSkill orchestrator
+    game_skill = GameSkill(
+        llm_client=llm_client,
+        template_skill=template_skill,
+        debug_skill=debug_skill,
+        tool_registry=tool_registry,
+        config=config,
+    )
+
+    console.print(Panel.fit(
+        f"[bold]OpenGame v{__version__}[/bold]\n"
+        f"Prompt: [cyan]{prompt}[/cyan]\n"
+        f"Output: {output_dir}\n"
+        f"Model: [cyan]{model}[/cyan]",
+        title="Game Generation",
+    ))
+
+    # Run the pipeline
+    import asyncio
+    result = asyncio.run(game_skill.generate_game(prompt, output_dir))
+
+    if result.success:
+        console.print(f"\n[green]✓ Game generated successfully![/green]")
+        console.print(f"  Project: {result.project_dir}")
+        console.print(f"  Duration: {result.duration_ms / 1000:.1f}s")
+        if result.gdd:
+            console.print(f"  GDD: {result.gdd.title}")
+    else:
+        console.print(f"\n[red]✗ Game generation failed[/red]")
+        if result.error:
+            console.print(f"  Error: {result.error}")
