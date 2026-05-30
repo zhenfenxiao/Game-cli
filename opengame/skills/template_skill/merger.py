@@ -90,20 +90,7 @@ class FamilyMerger:
         count = len(library.families) + 1
         family_id = f"fam-{abstracted.archetype}-{count:03d}"
 
-        family = TemplateFamily(
-            id=family_id,
-            archetype=abstracted.archetype,
-            physics_profile=abstracted.template_files[0].content if abstracted.template_files else "",
-            discovered_at_task=project_path,
-            contributing_projects=[project_path],
-            stability=0.1,
-            template_files=abstracted.template_files,
-            hooks=abstracted.hooks,
-            config_extensions=abstracted.config_schema,
-            summary=abstracted.summary,
-        )
-        # Fix physics_profile (was assigned wrong value above)
-        # Use a default physics profile based on archetype
+        # Determine physics profile based on archetype
         from opengame.skills.template_skill.types import PhysicsProfile
         physics_map = {
             "platformer": PhysicsProfile(has_gravity=True, perspective="side", movement_type="continuous"),
@@ -112,9 +99,22 @@ class FamilyMerger:
             "tower_defense": PhysicsProfile(has_gravity=False, perspective="top_down", movement_type="path"),
             "ui_heavy": PhysicsProfile(has_gravity=False, perspective="none", movement_type="ui_only"),
         }
-        family.physics_profile = physics_map.get(
+        physics = physics_map.get(
             abstracted.archetype,
             PhysicsProfile(has_gravity=False, perspective="top_down", movement_type="continuous"),
+        )
+
+        family = TemplateFamily(
+            id=family_id,
+            archetype=abstracted.archetype,
+            physics_profile=physics,
+            discovered_at_task=project_path,
+            contributing_projects=[project_path],
+            stability=0.1,
+            template_files=abstracted.template_files,
+            hooks=abstracted.hooks,
+            config_extensions=abstracted.config_schema,
+            summary=abstracted.summary,
         )
 
         library.families.append(family)

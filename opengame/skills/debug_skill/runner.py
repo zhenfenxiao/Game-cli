@@ -68,7 +68,7 @@ class StageRunner:
             command = "npm run dev"
         else:
             return RunResult(
-                stage=stage,  # type: ignore[arg-type]
+                stage="build",  # Default to "build" for unknown stage
                 success=False,
                 stderr=f"Unknown stage: {stage}",
             )

@@ -24,7 +24,7 @@ from opengame.skills.template_skill.types import (
 
 # Regex patterns for TypeScript parsing
 CLASS_RE = re.compile(
-    r"export\s+(?:abstract\s+)?class\s+(\w+)(?:\s+extends\s+(\w+))?\s*\{",
+    r"export\s+(?:abstract\s+)?class\s+(\w+)(?:\s+extends\s+([\w.]+))?\s*\{",
     re.MULTILINE,
 )
 METHOD_RE = re.compile(
