@@ -95,15 +95,19 @@ class AssetImageService:
         """Generate via Alibaba Tongyi Wanx (DashScope) API.
 
         Uses the async task-based API flow: submit → poll → get result URL.
+        Tongyi uses "1024*1024" format (asterisk), not "1024x1024" (letter x).
         """
         base_url = self.config.base_url or "https://dashscope.aliyuncs.com"
         api_url = f"{base_url}/api/v1/services/aigc/text2image/image-synthesis"
+
+        # Tongyi uses "*" not "x" for size format
+        tongyi_size = size.replace("x", "*")
 
         payload = {
             "model": self.config.model or "wan2.5-t2i-preview",
             "input": {"prompt": prompt},
             "parameters": {
-                "size": size,
+                "size": tongyi_size,
                 "n": 1,
             },
         }
@@ -111,6 +115,7 @@ class AssetImageService:
         headers = {
             "Authorization": f"Bearer {self.config.api_key}",
             "Content-Type": "application/json",
+            "X-DashScope-Async": "enable",  # Required: sync API returns 403
         }
 
         response = await self.client.post(api_url, json=payload, headers=headers)
