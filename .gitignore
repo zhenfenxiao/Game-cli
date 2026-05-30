@@ -45,6 +45,8 @@ Thumbs.db
 
 # Game generation output
 output/
+output_old/
+output_*/
 
 # Node.js (output games)
 node_modules/
