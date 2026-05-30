@@ -238,15 +238,26 @@ Be specific and detailed. Include concrete control schemes, scoring formulas, an
     @staticmethod
     def _parse_gdd(content: str, archetype: str) -> GameDesignDocument:
         """Parse GDD markdown into structured sections."""
-        # Extract title from first heading
-        title_match = re.search(r"#\s*(.+)", content)
-        title = title_match.group(1).strip() if title_match else "Untitled Game"
+        # Extract title: first # heading that is NOT a section number
+        title = "Untitled Game"
+        for match in re.finditer(r"#\s*(.+)", content):
+            candidate = match.group(1).strip()
+            # Skip if it looks like "1. Game Overview" (section header)
+            if not re.match(r"\d+\.\s", candidate):
+                title = candidate
+                break
 
-        # Split into sections
+        # Split into 6 sections (only valid section numbers 1-6)
         sections: list[GddSection] = []
-        section_pattern = re.compile(r"##\s*(\d+)\.?\s*(.+?)\n(.*?)(?=##\s*\d|\Z)", re.DOTALL)
+        seen_numbers: set[int] = set()
+        section_pattern = re.compile(
+            r"##\s*(\d+)\.?\s*(.+?)\n(.*?)(?=##\s*\d|\Z)", re.DOTALL,
+        )
         for match in section_pattern.finditer(content):
             num = int(match.group(1))
+            if num < 1 or num > 6 or num in seen_numbers:
+                continue
+            seen_numbers.add(num)
             sec_title = match.group(2).strip()
             sec_content = match.group(3).strip()
             sections.append(GddSection(section_number=num, title=sec_title, content=sec_content))

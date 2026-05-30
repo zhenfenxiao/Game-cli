@@ -110,9 +110,18 @@ def generate(
         title="Game Generation",
     ))
 
-    # Run the pipeline
+    # Run the pipeline (with proper event loop cleanup)
     import asyncio
-    result = asyncio.run(game_skill.generate_game(prompt, output_dir))
+    import warnings
+    loop = asyncio.new_event_loop()
+    try:
+        result = loop.run_until_complete(game_skill.generate_game(prompt, output_dir))
+        # Let pending subprocess transports finish cleanup
+        loop.run_until_complete(asyncio.sleep(0.1))
+    finally:
+        # Suppress "Event loop is closed" noise from subprocess cleanup
+        warnings.filterwarnings("ignore", category=ResourceWarning)
+        loop.close()
 
     if result.success:
         console.print(f"\n[green]✓ Game generated successfully![/green]")
@@ -120,6 +129,14 @@ def generate(
         console.print(f"  Duration: {result.duration_ms / 1000:.1f}s")
         if result.gdd:
             console.print(f"  GDD: {result.gdd.title}")
+    elif result.gdd is not None:
+        # GDD was generated — game may be playable even if debug failed
+        console.print(f"\n[yellow]⚠ Game generated with warnings[/yellow]")
+        console.print(f"  Project: {result.project_dir}")
+        console.print(f"  The game may work in browser despite debug phase issues.")
+        console.print(f"  To serve: cd {result.project_dir} && npm run dev")
+        if result.error:
+            console.print(f"  [dim]Debug: {result.error}[/dim]")
     else:
         console.print(f"\n[red]✗ Game generation failed[/red]")
         if result.error:
