@@ -33,12 +33,16 @@ class TraceSession:
         self._events = []
 
     def finish(self, success: bool, error: str | None = None) -> None:
-        """Flush buffered events and close the session."""
+        """Flush any remaining buffered events and close the session."""
+        self._flush()
+        if self.session_id is not None:
+            self.store.finish_session(self.session_id, success, error)
+
+    def _flush(self) -> None:
+        """Write buffered events to DB immediately."""
         if self._events:
             self.store.add_event_batch(self._events)
             self._events.clear()
-        if self.session_id is not None:
-            self.store.finish_session(self.session_id, success, error)
 
     # --- Phase tracking ---
 
@@ -49,7 +53,7 @@ class TraceSession:
         self._emit(phase, "phase_start", {"detail": detail})
 
     def phase_end(self, phase: str, result: str = "", metrics: dict[str, Any] | None = None) -> None:
-        """Record the end of a pipeline phase."""
+        """Record the end of a pipeline phase and flush to DB."""
         self._seq += 1
         elapsed = 0.0
         if phase in self._phase_timers:
@@ -58,6 +62,7 @@ class TraceSession:
         if metrics:
             data.update(metrics)
         self._emit(phase, "phase_end", data)
+        self._flush()  # Persist events after each phase
 
     # --- LLM tracing ---
 
@@ -115,6 +120,7 @@ class TraceSession:
         self._emit(phase, "error", {
             "error_type": error_type, "message": error_message[:500],
         })
+        self._flush()  # Flush immediately on errors
 
     # --- Debug iteration ---
 
