@@ -134,7 +134,8 @@ def generate(
         console.print(f"[dim]Trace session #{trace.session_id} started[/dim]")
         result = loop.run_until_complete(game_skill.generate_game(prompt, output_dir))
         trace.finish(success=result.success, error=result.error)
-        console.print(f"[dim]Trace saved: {len(trace._events)} events → .opengame/traces/traces.db[/dim]")
+        event_count = len(trace_store.get_events(trace.session_id)) if trace.session_id else 0
+        console.print(f"[dim]Trace saved: {event_count} events → .opengame/traces/traces.db[/dim]")
         # Let pending subprocess transports finish cleanup
         loop.run_until_complete(asyncio.sleep(0.1))
     except Exception as e:
