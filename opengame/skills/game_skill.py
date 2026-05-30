@@ -124,6 +124,17 @@ class GameSkill:
             _log(f"  → {'[green]PASSED[/green]' if debug_result.success else '[yellow]FAILED[/yellow]'} "
                  f"({debug_result.trace.total_iterations} iterations)")
 
+            # Phase 7: Evolve template library (learn from the generated game)
+            if self.config.game_skill.evolve_after_debug:
+                _log("[bold cyan]Evolving template library[/] from generated game...")
+                try:
+                    import uuid
+                    task_id = f"gen-{uuid.uuid4()!s:.8}"
+                    library = await self.template_skill.evolve(root, task_id)
+                    _log(f"  → Library v{library.version}, {len(library.families)} families")
+                except Exception as e:
+                    _log(f"  → [yellow]Evolution skipped: {e}[/yellow]")
+
             elapsed_ms = int((time.monotonic() - start_time) * 1000)
 
             return GameResult(
