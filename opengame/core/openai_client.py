@@ -162,12 +162,26 @@ class OpenAiClient(BaseLlmClient):
         max_tokens: int,
     ) -> LlmResponse:
         """Non-streaming generation."""
+        # Detect reasoning models (deepseek-v4-pro, o1, o3, etc.)
+        is_reasoning_model = any(
+            prefix in self.model.lower()
+            for prefix in ("deepseek-v4", "deepseek-r1", "o1", "o3", "o4")
+        )
+
+        # Reasoning models need larger token budget (reasoning tokens are included)
+        if is_reasoning_model and max_tokens < 4096:
+            max_tokens = 4096
+
         kwargs: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
-            "temperature": temperature,
             "max_tokens": max_tokens,
         }
+
+        # Reasoning models may not support temperature simultaneously
+        if not is_reasoning_model:
+            kwargs["temperature"] = temperature
+
         if tools:
             kwargs["tools"] = tools
 

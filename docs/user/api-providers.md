@@ -61,7 +61,7 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_MODEL=gpt-4o
 ```
 
-> **已知问题**：`deepseek-v4-pro` 作为 model name 会返回空响应（HTTP 200 但无内容），建议使用 `deepseek-chat`。
+> **注意**：`deepseek-v4-pro` 是推理模型，reasoning tokens 计入 `max_tokens` 预算，需要至少 4096 max_tokens（代码已自动处理）。如果手动测试时 `max_tokens` 太小（如 10），回复会为空。该模型也可能不支持同时设置 `temperature`（代码检测到推理模型时自动省略 temperature）。
 
 ---
 
