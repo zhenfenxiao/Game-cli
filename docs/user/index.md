@@ -1,24 +1,23 @@
 # OpenGame 用户文档
 
-## 目录
+## 快速导航
 
 | 文档 | 说明 |
 |------|------|
-| [快速入门](./getting-started.md) | 安装、配置 API 密钥、验证安装 |
+| [快速入门](./getting-started.md) | 安装、.env 配置、生成第一个游戏 |
+| [API 提供商配置](./api-providers.md) | LLM / 图片 / 音频 / 视频 provider 配置 |
 | [配置指南](./configuration.md) | 5 层配置系统、环境变量、配置项详解 |
 | [CLI 命令参考](./cli-reference.md) | 完整命令列表、选项说明、使用示例 |
+| [技能使用指南](./skills.md) | Template Skill / Debug Skill / GameSkill 详解 |
+| [系统架构](./architecture.md) | 架构总览、关键设计决策、数据流 |
 
 ## 文档状态
 
-当前文档覆盖 Phase 1-3 已实现的功能：
-
-- ✅ 安装和项目设置
-- ✅ 配置系统（config show / init / validate）
-- ✅ CLI 接口（4 个子命令全部可用）
-- ✅ generate — 6-phase 游戏生成管道（Phase 3 资产生成 stub）
-- ✅ debug — Algorithm 1 REPEAT...UNTIL 调试循环
-- ✅ evolve — 模板库进化（采集→分类→提取→抽象→合并→保存）
-- ✅ Template Skill（7 组件）和 Debug Skill（8 组件）
-- 🚧 Phase 4（Asset Pipeline）资产管线
-
-后续阶段完成后将持续更新文档。
+| Phase | 功能 | 状态 |
+|-------|------|------|
+| Phase 1 | Foundation（配置、CLI、服务、工具） | ✅ |
+| Phase 2 | Agent Runtime（TurnLoop、21 工具、4 层压缩） | ✅ |
+| Phase 3 | Game Skill（Template/Debug Skill、GameSkill 编排器） | ✅ |
+| Phase 4 | Asset Pipeline（图片/音频/视频/AutoTiler） | ✅ |
+| Phase 5 | Integration（端到端管道） | 📋 |
+| Phase 6 | Bench + Polish（评估、打包） | 📋 |

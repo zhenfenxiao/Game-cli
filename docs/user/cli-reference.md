@@ -78,9 +78,9 @@ python -m opengame config validate
 
 ---
 
-### generate — 游戏生成 🚧
+### generate — 游戏生成 ✅
 
-从自然语言提示词生成完整网页游戏。（Phase 5 实现）
+从自然语言提示词生成完整网页游戏（6-phase pipeline）。
 
 ```bash
 python -m opengame generate -p "Build a Snake clone with WASD controls and a dark theme"
@@ -100,13 +100,13 @@ python -m opengame generate -p "..." -m gpt-4o-mini
 | `--model` | `-m` | LLM 模型 |
 | `--verbose` | — | 详细输出 |
 
-> **当前状态（Phase 3）**：✅ 完整 6-phase pipeline 已实现。资产生成（Phase 3）为 stub，等待 Phase 4 完成。
+> **当前状态（Phase 4）**：✅ 完整 6-phase pipeline + 资产生成（Tongyi 图片已验证可用）
 
 ---
 
-### debug — 游戏调试 🚧
+### debug — 游戏调试 ✅
 
-诊断和修复游戏项目中的构建和运行错误。（Phase 3 实现）
+诊断和修复游戏项目中的构建和运行错误（Algorithm 1 REPEAT...UNTIL）。
 
 ```bash
 python -m opengame debug ./my-game
