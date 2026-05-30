@@ -1,0 +1,180 @@
+{
+  "session": {
+    "id": 1,
+    "prompt": "Build a simple Snake clone with WASD controls",
+    "model": "deepseek-v4-pro",
+    "start_time": "2026-05-30T04:49:05.149481+00:00",
+    "end_time": "2026-05-30T04:59:41.690188+00:00",
+    "success": false,
+    "error": null,
+    "metadata": {}
+  },
+  "events": [
+    {
+      "id": 1,
+      "session_id": 1,
+      "seq": 1,
+      "phase": "scaffold",
+      "event_type": "phase_start",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "detail": "Build a simple Snake clone with WASD controls"
+      }
+    },
+    {
+      "id": 2,
+      "session_id": 1,
+      "seq": 2,
+      "phase": "scaffold",
+      "event_type": "phase_end",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "result": "grid_logic",
+        "elapsed_ms": 0
+      }
+    },
+    {
+      "id": 3,
+      "session_id": 1,
+      "seq": 3,
+      "phase": "gdd",
+      "event_type": "phase_start",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "detail": "archetype=grid_logic"
+      }
+    },
+    {
+      "id": 4,
+      "session_id": 1,
+      "seq": 4,
+      "phase": "gdd",
+      "event_type": "phase_end",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "result": "# 1. Game Overview",
+        "elapsed_ms": 104417,
+        "sections": 3
+      }
+    },
+    {
+      "id": 5,
+      "session_id": 1,
+      "seq": 5,
+      "phase": "assets",
+      "event_type": "phase_start",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "detail": ""
+      }
+    },
+    {
+      "id": 6,
+      "session_id": 1,
+      "seq": 6,
+      "phase": "assets",
+      "event_type": "phase_end",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "result": "",
+        "elapsed_ms": 0,
+        "count": 0
+      }
+    },
+    {
+      "id": 7,
+      "session_id": 1,
+      "seq": 7,
+      "phase": "config",
+      "event_type": "phase_start",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "detail": ""
+      }
+    },
+    {
+      "id": 8,
+      "session_id": 1,
+      "seq": 8,
+      "phase": "config",
+      "event_type": "phase_end",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "result": "",
+        "elapsed_ms": 0
+      }
+    },
+    {
+      "id": 9,
+      "session_id": 1,
+      "seq": 9,
+      "phase": "implementation",
+      "event_type": "phase_start",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "detail": ""
+      }
+    },
+    {
+      "id": 10,
+      "session_id": 1,
+      "seq": 10,
+      "phase": "implementation",
+      "event_type": "phase_end",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "result": "",
+        "elapsed_ms": 321440
+      }
+    },
+    {
+      "id": 11,
+      "session_id": 1,
+      "seq": 11,
+      "phase": "debug",
+      "event_type": "phase_start",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "detail": ""
+      }
+    },
+    {
+      "id": 12,
+      "session_id": 1,
+      "seq": 12,
+      "phase": "debug",
+      "event_type": "phase_end",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "result": "False",
+        "elapsed_ms": 68388,
+        "iterations": 20
+      }
+    },
+    {
+      "id": 13,
+      "session_id": 1,
+      "seq": 13,
+      "phase": "evolve",
+      "event_type": "phase_start",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "detail": ""
+      }
+    },
+    {
+      "id": 14,
+      "session_id": 1,
+      "seq": 14,
+      "phase": "evolve",
+      "event_type": "phase_end",
+      "timestamp": "2026-05-30T04:59:41.689249+00:00",
+      "data": {
+        "result": "",
+        "elapsed_ms": 142309,
+        "library_version": 1,
+        "families": 1
+      }
+    }
+  ]
+}

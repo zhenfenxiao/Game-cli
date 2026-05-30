@@ -72,11 +72,17 @@ class TraceStore:
 
     def add_event_batch(self, events: list[dict[str, Any]]) -> None:
         """Insert multiple events in a single transaction."""
+        if not events:
+            return
         now = datetime.now(timezone.utc).isoformat()
+        # Filter out events with None session_id (trace.start() not called)
+        valid = [e for e in events if e.get("session_id") is not None]
+        if not valid:
+            return
         rows = [
             (e["session_id"], e["seq"], e["phase"], e["event_type"],
              json.dumps(e.get("data", {}), ensure_ascii=False), now)
-            for e in events
+            for e in valid
         ]
         self._conn.executemany(
             "INSERT INTO events (session_id, seq, phase, event_type, data_json, timestamp) "
