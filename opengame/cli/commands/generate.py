@@ -39,16 +39,16 @@ def generate(
         "-o",
         help="Output directory for the generated game",
     ),
-    approval_mode: str = typer.Option(
-        "auto-edit",
+    approval_mode: str | None = typer.Option(
+        None,
         "--approval",
-        help="Approval mode: ask, auto-edit, or yolo",
+        help="Approval mode: ask, auto-edit, or yolo (default: from config)",
     ),
-    model: str = typer.Option(
-        "gpt-4o",
+    model: str | None = typer.Option(
+        None,
         "--model",
         "-m",
-        help="LLM model to use",
+        help="LLM model to use (default: from config or env)",
     ),
     verbose: bool = typer.Option(
         False,
@@ -57,10 +57,12 @@ def generate(
     ),
 ) -> None:
     """Generate a complete web game from a natural language prompt."""
-    # Load config
+    # Load config (only apply CLI overrides if user explicitly passed them)
     loader = ConfigLoader()
-    loader.set_cli_override("llm.model", model)
-    loader.set_cli_override("approval_mode", approval_mode)
+    if model is not None:
+        loader.set_cli_override("llm.model", model)
+    if approval_mode is not None:
+        loader.set_cli_override("approval_mode", approval_mode)
     config = loader.load(load_dotenv=True)
 
     # Initialize LLM client

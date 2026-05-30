@@ -43,14 +43,14 @@ def main(
         callback=version_callback,
         is_eager=True,
     ),
-    model: str = typer.Option(
-        "gpt-4o",
+    model: str | None = typer.Option(
+        None,
         "--model",
         "-m",
-        help="LLM model to use",
+        help="LLM model to use (default: from config or env)",
     ),
-    approval_mode: str = typer.Option(
-        "auto-edit",
+    approval_mode: str | None = typer.Option(
+        None,
         "--approval-mode",
         help="Approval mode: ask, auto-edit, or yolo",
     ),
