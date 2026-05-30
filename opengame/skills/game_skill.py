@@ -70,6 +70,11 @@ class GameSkill:
         self.debug_skill = debug_skill
         self.tool_registry = tool_registry
         self.config = config
+        self._tracer = None  # injected via set_tracer()
+
+    def set_tracer(self, tracer: Any) -> None:
+        """Inject a TraceSession for event recording."""
+        self._tracer = tracer
 
     async def generate_game(
         self,
@@ -92,48 +97,66 @@ class GameSkill:
             from rich.console import Console
             Console().print(msg)
 
+        trace = self._tracer
+
         try:
             # Phase 1: Classify and scaffold
             _log("[bold cyan]Phase 1/6[/] Classifying & scaffolding...")
+            if trace: trace.phase_start("scaffold", prompt[:100])
             archetype = self._phase_1_classify_and_scaffold(prompt, root)
             _log(f"  → Archetype: [green]{archetype}[/green]")
+            if trace: trace.phase_end("scaffold", archetype)
 
             # Phase 2: Generate GDD
             _log("[bold cyan]Phase 2/6[/] Generating Game Design Document...")
+            if trace: trace.phase_start("gdd", f"archetype={archetype}")
             gdd = await self._phase_2_generate_gdd(prompt, archetype, root)
             _log(f"  → GDD: [green]{gdd.title}[/green] ({len(gdd.sections)} sections)")
+            if trace: trace.phase_end("gdd", gdd.title, {"sections": len(gdd.sections)})
 
             # Phase 3: Generate assets
             _log("[bold cyan]Phase 3/6[/] Generating assets...")
+            if trace: trace.phase_start("assets")
             assets = await self._phase_3_generate_assets(gdd, root)
             _log(f"  → Assets: [green]{len(assets)} generated[/green]")
+            if trace: trace.phase_end("assets", "", {"count": len(assets)})
 
             # Phase 4: Config and registration
             _log("[bold cyan]Phase 4/6[/] Updating config & registration...")
+            if trace: trace.phase_start("config")
             self._phase_4_config_and_registration(gdd, archetype, root)
             _log("  → [green]Done[/green]")
+            if trace: trace.phase_end("config")
 
             # Phase 5: Code implementation
             _log("[bold cyan]Phase 5/6[/] Implementing game code (TurnLoop agent)...")
+            if trace: trace.phase_start("implementation")
             await self._phase_5_implement_code(prompt, gdd, archetype, root)
             _log("  → [green]Implementation complete[/green]")
+            if trace: trace.phase_end("implementation")
 
             # Phase 6: Debug and verification
             _log("[bold cyan]Phase 6/6[/] Debugging & verifying...")
+            if trace: trace.phase_start("debug")
             debug_result = await self._phase_6_debug(root)
             _log(f"  → {'[green]PASSED[/green]' if debug_result.success else '[yellow]FAILED[/yellow]'} "
                  f"({debug_result.trace.total_iterations} iterations)")
+            if trace: trace.phase_end("debug", str(debug_result.success),
+                {"iterations": debug_result.trace.total_iterations})
 
             # Phase 7: Evolve template library (learn from the generated game)
             if self.config.game_skill.evolve_after_debug:
                 _log("[bold cyan]Evolving template library[/] from generated game...")
+                if trace: trace.phase_start("evolve")
                 try:
                     import uuid
                     task_id = f"gen-{uuid.uuid4()!s:.8}"
                     library = await self.template_skill.evolve(root, task_id)
                     _log(f"  → Library v{library.version}, {len(library.families)} families")
+                    if trace: trace.phase_end("evolve", "", {"library_version": library.version, "families": len(library.families)})
                 except Exception as e:
                     _log(f"  → [yellow]Evolution skipped: {e}[/yellow]")
+                    if trace: trace.error("evolve", str(e))
 
             elapsed_ms = int((time.monotonic() - start_time) * 1000)
 
@@ -148,6 +171,7 @@ class GameSkill:
 
         except Exception as e:
             elapsed_ms = int((time.monotonic() - start_time) * 1000)
+            if trace: trace.error("pipeline", str(e), type(e).__name__)
             return GameResult(
                 success=False,
                 project_dir=root,

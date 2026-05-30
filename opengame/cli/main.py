@@ -19,11 +19,13 @@ from opengame.cli.commands import config as config_commands  # noqa: E402
 from opengame.cli.commands import debug as debug_commands  # noqa: E402
 from opengame.cli.commands import evolve as evolve_commands  # noqa: E402
 from opengame.cli.commands import generate as generate_commands  # noqa: E402
+from opengame.cli.commands import traces as traces_commands  # noqa: E402
 
 app.add_typer(config_commands.app, name="config", help="Manage configuration")
 app.add_typer(generate_commands.app, name="generate", help="Generate a game from a prompt")
 app.add_typer(debug_commands.app, name="debug", help="Debug a game project")
 app.add_typer(evolve_commands.app, name="evolve", help="Evolve template library")
+app.add_typer(traces_commands.app, name="traces", help="Browse agent trace history")
 
 
 def version_callback(value: bool) -> None:

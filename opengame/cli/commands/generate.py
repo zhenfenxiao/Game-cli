@@ -20,6 +20,8 @@ from opengame.skills.game_skill import GameSkill
 from opengame.skills.template_skill import TemplateSkill
 from opengame.skills.template_skill.library_manager import LibraryManager
 from opengame.tools.factory import create_tool_registry
+from opengame.tracing.store import TraceStore
+from opengame.tracing.tracer import Tracer
 
 app = typer.Typer(help="Generate a game from a natural language prompt")
 console = Console()
@@ -100,6 +102,12 @@ def generate(
     )
     game_skill.set_asset_service(asset_service)
 
+    # Set up tracing
+    trace_store = TraceStore()
+    trace_store.open()
+    trace = TraceSession(trace_store)
+    game_skill.set_tracer(trace)
+
     console.print(Panel.fit(
         f"[bold]OpenGame v{__version__}[/bold]\n"
         f"Prompt: [cyan]{prompt}[/cyan]\n"
@@ -115,10 +123,16 @@ def generate(
     import warnings
     loop = asyncio.new_event_loop()
     try:
+        trace.start(prompt, config.llm.model)
         result = loop.run_until_complete(game_skill.generate_game(prompt, output_dir))
+        trace.finish(success=result.success, error=result.error)
         # Let pending subprocess transports finish cleanup
         loop.run_until_complete(asyncio.sleep(0.1))
+    except Exception as e:
+        trace.finish(success=False, error=str(e))
+        raise
     finally:
+        trace_store.close()
         # Suppress "Event loop is closed" noise from subprocess cleanup
         warnings.filterwarnings("ignore", category=ResourceWarning)
         loop.close()
