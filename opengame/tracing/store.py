@@ -137,6 +137,35 @@ class TraceStore:
             for r in rows
         ]
 
+    # --- Export API ---
+
+    def export_session(self, session_id: int) -> dict[str, Any] | None:
+        """Export a single session with all events as a JSON-serializable dict."""
+        session = self.get_session(session_id)
+        if session is None:
+            return None
+
+        events = self.get_events(session_id)
+        # Parse data_json for each event
+        parsed_events = []
+        for e in events:
+            e["data"] = json.loads(e["data_json"]) if isinstance(e["data_json"], str) else e.get("data_json", {})
+            e.pop("data_json", None)
+            parsed_events.append(e)
+
+        session["metadata"] = json.loads(session["metadata_json"]) if isinstance(session["metadata_json"], str) else session.get("metadata_json", {})
+        session.pop("metadata_json", None)
+
+        return {"session": session, "events": parsed_events}
+
+    def export_all(self) -> list[dict[str, Any]]:
+        """Export all sessions with events as JSON-serializable dicts."""
+        sessions = self.list_sessions(limit=10000)
+        return [
+            export for s in sessions
+            if (export := self.export_session(s["id"])) is not None
+        ]
+
     # --- Schema ---
 
     def _create_tables(self) -> None:
