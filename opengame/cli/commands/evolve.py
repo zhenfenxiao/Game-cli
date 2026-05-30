@@ -20,7 +20,7 @@ app = typer.Typer(help="Evolve the template library")
 console = Console()
 
 
-@app.command()
+@app.callback(invoke_without_command=True)
 def evolve(
     project_path: Path = typer.Argument(
         ...,

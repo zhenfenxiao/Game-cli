@@ -20,7 +20,7 @@ app = typer.Typer(help="Debug a game project")
 console = Console()
 
 
-@app.command()
+@app.callback(invoke_without_command=True)
 def debug(
     project_path: Path = typer.Argument(
         ...,

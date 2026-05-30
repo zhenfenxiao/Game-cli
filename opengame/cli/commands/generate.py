@@ -25,7 +25,7 @@ app = typer.Typer(help="Generate a game from a natural language prompt")
 console = Console()
 
 
-@app.command()
+@app.callback(invoke_without_command=True)
 def generate(
     prompt: str = typer.Option(
         ...,
