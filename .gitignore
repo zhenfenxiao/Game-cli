@@ -43,6 +43,9 @@ Thumbs.db
 .env
 .env.local
 
+# Game generation output
+output/
+
 # Node.js (output games)
 node_modules/
 package-lock.json
