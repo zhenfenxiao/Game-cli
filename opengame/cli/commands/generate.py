@@ -21,7 +21,7 @@ from opengame.skills.template_skill import TemplateSkill
 from opengame.skills.template_skill.library_manager import LibraryManager
 from opengame.tools.factory import create_tool_registry
 from opengame.tracing.store import TraceStore
-from opengame.tracing.tracer import Tracer
+from opengame.tracing.tracer import TraceSession
 
 app = typer.Typer(help="Generate a game from a natural language prompt")
 console = Console()
