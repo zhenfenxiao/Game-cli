@@ -91,13 +91,20 @@ def show(session_id: int = typer.Argument(..., help="Session ID to inspect")) ->
     console.print(f"\n[bold]Timeline ({len(events)} events):[/bold]")
     icons = {
         "phase_start": "▶", "phase_end": "◀", "llm_call": "🤖", "llm_response": "💬",
-        "tool_call": "🔧", "tool_result": "✅", "error": "❌", "debug_iteration": "🪲",
+        "llm_exchange": "🔄", "tool_call": "🔧", "tool_result": "✅",
+        "error": "❌", "debug_iteration": "🪲",
     }
-    for e in events[:50]:
+    for e in events[:100]:
         icon = icons.get(e["event_type"], "•")
         data = json.loads(e["data_json"]) if isinstance(e["data_json"], str) else e.get("data_json", {})
         detail = ""
-        if e["event_type"] == "llm_call":
+        if e["event_type"] == "llm_exchange":
+            msgs = data.get("messages_count", 0)
+            resp_len = len(data.get("response", ""))
+            tokens = data.get("token_usage", {}).get("total_tokens", 0)
+            has_tools = "🔧" if data.get("tool_calls") else ""
+            detail = f" [{data.get('model', '')}] {msgs}msg→{resp_len}chars {tokens}tk {has_tools}"
+        elif e["event_type"] == "llm_call":
             detail = f" [{data.get('model', '')}]"
         elif e["event_type"] == "tool_call":
             detail = f" [{data.get('tool_name', '')}]"
