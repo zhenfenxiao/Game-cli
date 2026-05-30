@@ -76,9 +76,12 @@ opengame config validate  # 检查配置完整性
 | `config show` | 显示当前配置（含 .env 加载） | ✅ |
 | `config init` | 创建全局配置文件模板 | ✅ |
 | `config validate` | 验证配置完整性 | ✅ |
-| `generate -p "..."` | 6 阶段游戏生成 | ✅ |
+| `generate -p "..."` | 6 阶段游戏生成（自动记录 trace） | ✅ |
 | `debug <path>` | Algorithm 1 调试循环 | ✅ |
 | `evolve <path>` | 模板库进化（从成品学习） | ✅ |
+| `traces list` | 浏览生成历史记录 | ✅ |
+| `traces show <id>` | 查看某次生成的详细 timeline | ✅ |
+| `traces export` | 导出 traces 为 JSON（用于训练） | ✅ |
 
 ## 生成第一个游戏
 

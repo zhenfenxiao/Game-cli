@@ -154,6 +154,61 @@ opengame evolve ./my-game --library ./my-templates
 
 ---
 
+### traces — 轨迹查看 ✅
+
+浏览、查看和导出 agent trace 记录。
+
+每次 `opengame generate` 会自动记录完整的生成过程到 SQLite 数据库（`.opengame/traces/traces.db`）。
+
+**列出最近的 sessions：**
+
+```bash
+opengame traces list
+opengame traces list -n 50
+```
+
+输出示例：
+```
+          Trace Sessions (last 3)
+┏━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ID ┃ Prompt             ┃ Model          ┃ Status ┃ Start                 ┃
+┡━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 3  │ Build a Snake...   │ deepseek-v4-   │ ✓      │ 2026-05-30T14:30:00   │
+│ 2  │ A platformer...    │ deepseek-v4-   │ ✗      │ 2026-05-30T13:00:00   │
+│ 1  │ Test game          │ deepseek-v4-   │ ✓      │ 2026-05-30T12:00:00   │
+└────┴────────────────────┴────────────────┴────────┴───────────────────────┘
+```
+
+**查看某次 session 的详细信息：**
+
+```bash
+opengame traces show 3
+```
+
+输出包括各阶段耗时、LLM 调用、工具执行和错误信息的时间线。
+
+**导出为 JSON（用于模型训练或分析）：**
+
+```bash
+# 导出所有 sessions
+opengame traces export
+
+# 导出指定 session
+opengame traces export -s 3
+
+# 自定义输出目录
+opengame traces export -o ./training-data
+
+# 紧凑格式
+opengame traces export --compact
+```
+
+导出格式：`{ "session": {id, prompt, model, success, ...}, "events": [{seq, phase, event_type, data, timestamp}, ...] }`
+
+> **存储位置**：`.opengame/traces/traces.db`（SQLite）。每次 generate 自动记录，无需额外配置。
+
+---
+
 ## 退出码
 
 | 退出码 | 说明 |

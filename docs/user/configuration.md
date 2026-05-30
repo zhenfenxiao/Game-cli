@@ -98,6 +98,7 @@ opengame config init   # 创建配置文件模板
 | `OPENGAME_REASONING_MODEL` | `reasoning.model` | string | 推理模型 |
 | `GAME_TEMPLATES_DIR` | `game_skill.templates_dir` | path | 模板目录 |
 | `GAME_DOCS_DIR` | `game_skill.docs_dir` | path | 文档目录 |
+| `GAME_DEBUG_ITERATIONS` | `game_skill.max_debug_iterations` | int | 最大调试迭代次数 |
 
 ---
 

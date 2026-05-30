@@ -19,5 +19,5 @@
 | Phase 2 | Agent Runtime（TurnLoop、21 工具、4 层压缩） | ✅ |
 | Phase 3 | Game Skill（Template/Debug Skill、GameSkill 编排器） | ✅ |
 | Phase 4 | Asset Pipeline（图片/音频/视频/AutoTiler） | ✅ |
-| Phase 5 | Integration（端到端管道） | 📋 |
+| Phase 5 | Integration（端到端管道、Agent Trace） | ✅ |
 | Phase 6 | Bench + Polish（评估、打包） | 📋 |
