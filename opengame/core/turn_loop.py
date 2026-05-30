@@ -75,6 +75,10 @@ class TurnLoop:
         # Runtime context reference (set during run(), accessible by tools)
         self._context: AgentContext | None = None
 
+    def set_tracer(self, tracer: Any) -> None:
+        """Inject a TraceSession for recording LLM exchanges."""
+        self.content_generator.set_tracer(tracer)
+
     @property
     def context(self) -> AgentContext | None:
         """Get the current agent context (accessible by tools for state injection)."""
@@ -140,6 +144,7 @@ class TurnLoop:
             response = await self.content_generator.generate(
                 messages=self._context.messages,
                 tools=tools if tools else None,
+                phase="implementation",
             )
 
             # --- Parse response ---

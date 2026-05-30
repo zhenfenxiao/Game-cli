@@ -253,14 +253,29 @@ Include specific details: control keys, scoring rules, level layouts, asset list
 
 Be specific and detailed. Include concrete control schemes, scoring formulas, and level layouts."""
 
+        import time as _time
+        _t0 = _time.monotonic()
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
         response = await self.llm_client.generate(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
+            messages=messages,
             temperature=0.7,
             max_tokens=4000,
         )
+        _elapsed = int((_time.monotonic() - _t0) * 1000)
+
+        if self._tracer:
+            self._tracer.record_llm_exchange(
+                phase="gdd",
+                messages=messages,
+                response_content=response.content,
+                model=self.llm_client.model,
+                finish_reason=response.finish_reason,
+                token_usage=None,
+                elapsed_ms=_elapsed,
+            )
 
         gdd_content = response.content or ""
         gdd = self._parse_gdd(gdd_content, archetype)
@@ -561,6 +576,8 @@ Start by reading the existing template files, then implement game-specific scene
             llm_client=self.llm_client,
             tool_registry=self.tool_registry,
         )
+        if self._tracer:
+            loop.set_tracer(self._tracer)
 
         result = await loop.run(
             system_prompt=system_prompt,

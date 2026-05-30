@@ -90,6 +90,72 @@ class TraceSession:
             "has_tool_calls": has_tool_calls,
         })
 
+    def record_llm_exchange(
+        self,
+        phase: str,
+        messages: list[dict[str, Any]],
+        response_content: str | None,
+        model: str = "",
+        finish_reason: str = "stop",
+        token_usage: dict[str, int] | None = None,
+        tool_calls: list[dict[str, Any]] | None = None,
+        elapsed_ms: int = 0,
+    ) -> None:
+        """Record a complete LLM exchange — messages sent + response received.
+
+        Captures the full OpenAI-format conversation for training and debugging.
+        Large message contents are truncated to avoid excessive DB bloat.
+
+        Args:
+            phase: Pipeline phase (scaffold, gdd, implementation, etc.).
+            messages: Full messages array sent to the LLM.
+            response_content: The LLM's text response.
+            model: Model name used for this call.
+            finish_reason: stop, tool_calls, length, etc.
+            token_usage: Dict with prompt_tokens, completion_tokens, total_tokens.
+            tool_calls: Tool calls returned by the LLM.
+            elapsed_ms: Call duration in milliseconds.
+        """
+        self._seq += 1
+        # Truncate message contents to keep DB size reasonable
+        truncated_messages = []
+        for msg in messages:
+            m = {"role": msg.get("role", "unknown")}
+            content = msg.get("content", "")
+            if isinstance(content, str):
+                m["content"] = content[:2000]  # truncate per message
+            elif content is None:
+                m["content"] = None
+            else:
+                m["content"] = str(content)[:2000]
+            # Preserve tool_calls in assistant messages
+            if msg.get("tool_calls"):
+                m["tool_calls"] = [
+                    {"id": tc.get("id", ""), "function": {
+                        "name": tc.get("function", {}).get("name", ""),
+                        "arguments": tc.get("function", {}).get("arguments", "")[:500],
+                    }}
+                    for tc in msg["tool_calls"]
+                ]
+            if msg.get("tool_call_id"):
+                m["tool_call_id"] = msg["tool_call_id"]
+            truncated_messages.append(m)
+
+        # Truncate response
+        resp = (response_content or "")[:3000]
+
+        self._emit(phase, "llm_exchange", {
+            "model": model,
+            "messages": truncated_messages,
+            "messages_count": len(messages),
+            "response": resp,
+            "finish_reason": finish_reason,
+            "token_usage": token_usage or {},
+            "tool_calls": tool_calls or [],
+            "elapsed_ms": elapsed_ms,
+        })
+        self._flush()  # Persist LLM exchanges immediately
+
     # --- Tool tracing ---
 
     def tool_call(self, phase: str, tool_name: str, tool_call_id: str) -> None:
