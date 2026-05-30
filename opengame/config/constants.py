@@ -60,8 +60,9 @@ ENV_MAPPINGS: dict[str, tuple[str, str]] = {
     "OPENGAME_REASONING_MODEL": ("reasoning", "model"),
     "GAME_TEMPLATES_DIR": ("game_skill", "templates_dir"),
     "GAME_DOCS_DIR": ("game_skill", "docs_dir"),
+    "GAME_DEBUG_ITERATIONS": ("game_skill", "max_debug_iterations"),
 }
 
 # Max debug iterations
-MAX_DEBUG_ITERATIONS = 20
+MAX_DEBUG_ITERATIONS = 100
 EVOLVE_AFTER_DEBUG = True

@@ -57,6 +57,12 @@ def generate(
         "--verbose",
         help="Enable verbose output",
     ),
+    max_debug_iterations: int | None = typer.Option(
+        None,
+        "--max-debug-iterations",
+        "-n",
+        help="Maximum debug iterations (default: 20 from config)",
+    ),
 ) -> None:
     """Generate a complete web game from a natural language prompt."""
     # Load config (only apply CLI overrides if user explicitly passed them)
@@ -80,10 +86,11 @@ def generate(
     template_skill = TemplateSkill(llm_client, library_manager)
 
     protocol_manager = ProtocolManager(config.game_skill.protocol_output_dir)
+    debug_iterations = max_debug_iterations if max_debug_iterations is not None else config.game_skill.max_debug_iterations
     debug_skill = DebugSkill(
         llm_client,
         protocol_manager,
-        max_iterations=config.game_skill.max_debug_iterations,
+        max_iterations=debug_iterations,
     )
 
     # Initialize TurnLoop with tools
