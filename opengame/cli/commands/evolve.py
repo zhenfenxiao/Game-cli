@@ -46,7 +46,7 @@ def evolve(
     """Evolve the template library by analyzing a completed game project."""
     # Load config
     loader = ConfigLoader()
-    config = loader.load()
+    config = loader.load(load_dotenv=True)
 
     # Initialize LLM client
     llm_client = OpenAiClient(

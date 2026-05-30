@@ -11,6 +11,23 @@ import pytest
 from opengame.cli.config_loader import ConfigLoader
 from opengame.config.constants import PROJECT_SETTINGS_FILE, USER_SETTINGS_FILE
 
+# Env vars that .env might set — clear them for clean test runs
+_ENV_VARS_TO_CLEAR = [
+    "OPENAI_API_KEY", "OPENAI_BASE_URL", "OPENAI_MODEL",
+    "OPENGAME_IMAGE_PROVIDER", "OPENGAME_IMAGE_API_KEY", "OPENGAME_IMAGE_BASE_URL", "OPENGAME_IMAGE_MODEL",
+    "OPENGAME_AUDIO_PROVIDER", "OPENGAME_AUDIO_API_KEY", "OPENGAME_AUDIO_BASE_URL", "OPENGAME_AUDIO_MODEL",
+    "OPENGAME_VIDEO_PROVIDER", "OPENGAME_VIDEO_API_KEY",
+    "OPENGAME_REASONING_PROVIDER", "OPENGAME_REASONING_API_KEY", "OPENGAME_REASONING_BASE_URL", "OPENGAME_REASONING_MODEL",
+    "GAME_TEMPLATES_DIR", "GAME_DOCS_DIR",
+]
+
+
+@pytest.fixture(autouse=True)
+def clear_dotenv_env_vars(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Clear .env-loaded env vars for clean test runs."""
+    for var in _ENV_VARS_TO_CLEAR:
+        monkeypatch.delenv(var, raising=False)
+
 
 class TestConfigLoaderBasics:
     """Tests for basic ConfigLoader behavior."""

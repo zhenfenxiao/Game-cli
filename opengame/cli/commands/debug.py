@@ -47,7 +47,7 @@ def debug(
     """Debug a game project, diagnosing and repairing build/test errors."""
     # Load config
     loader = ConfigLoader()
-    config = loader.load()
+    config = loader.load(load_dotenv=True)
 
     # Initialize LLM client
     llm_client = OpenAiClient(

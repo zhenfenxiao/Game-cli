@@ -14,6 +14,7 @@ from rich.panel import Panel
 from opengame import __version__
 from opengame.cli.config_loader import ConfigLoader
 from opengame.core.openai_client import OpenAiClient
+from opengame.services.asset_service import AssetService
 from opengame.skills.debug_skill import DebugSkill, ProtocolManager
 from opengame.skills.game_skill import GameSkill
 from opengame.skills.template_skill import TemplateSkill
@@ -60,7 +61,7 @@ def generate(
     loader = ConfigLoader()
     loader.set_cli_override("llm.model", model)
     loader.set_cli_override("approval_mode", approval_mode)
-    config = loader.load()
+    config = loader.load(load_dotenv=True)
 
     # Initialize LLM client
     llm_client = OpenAiClient(
@@ -84,6 +85,9 @@ def generate(
     # Initialize TurnLoop with tools
     tool_registry = create_tool_registry(llm_client=llm_client)
 
+    # Build the AssetService for asset generation
+    asset_service = AssetService(config)
+
     # Build the GameSkill orchestrator
     game_skill = GameSkill(
         llm_client=llm_client,
@@ -92,6 +96,7 @@ def generate(
         tool_registry=tool_registry,
         config=config,
     )
+    game_skill.set_asset_service(asset_service)
 
     console.print(Panel.fit(
         f"[bold]OpenGame v{__version__}[/bold]\n"

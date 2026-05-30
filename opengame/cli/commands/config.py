@@ -20,7 +20,7 @@ def show(
 ) -> None:
     """Show the effective configuration (merged from all sources)."""
     loader = ConfigLoader()
-    config = loader.load()
+    config = loader.load(load_dotenv=True)
 
     if raw:
         console.print_json(config.model_dump_json(indent=2))
@@ -77,7 +77,7 @@ def init() -> None:
 def validate() -> None:
     """Validate the current configuration."""
     loader = ConfigLoader()
-    config = loader.load()
+    config = loader.load(load_dotenv=True)
 
     errors: list[str] = []
     warnings: list[str] = []

@@ -45,12 +45,19 @@ class ConfigLoader:
         """
         self._set_nested(self.cli_overrides, key, value)
 
-    def load(self) -> OpenGameConfig:
+    def load(self, load_dotenv: bool = False) -> OpenGameConfig:
         """Load and merge all configuration sources.
+
+        Args:
+            load_dotenv: If True, load .env file before reading env vars.
 
         Returns:
             Merged OpenGameConfig from all 5 layers.
         """
+        # Load .env file into os.environ before reading env vars
+        if load_dotenv:
+            self._load_dotenv_file()
+
         # Start with defaults (Layer 5)
         config = OpenGameConfig()
 
@@ -152,6 +159,21 @@ class ConfigLoader:
             else:
                 result[key] = value
         return result
+
+    @staticmethod
+    def _load_dotenv_file() -> None:
+        """Load .env file from current directory into os.environ.
+
+        Uses python-dotenv to parse and load environment variables.
+        Silently skips if the file doesn't exist or dotenv is unavailable.
+        """
+        try:
+            from dotenv import load_dotenv
+            env_path = Path(".env")
+            if env_path.exists():
+                load_dotenv(env_path, override=False)
+        except ImportError:
+            pass  # python-dotenv not installed
 
     @staticmethod
     def _set_nested(d: dict, key: str, value: Any) -> None:

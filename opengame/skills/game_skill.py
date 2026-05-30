@@ -240,49 +240,104 @@ Be specific and detailed. Include concrete control schemes, scoring formulas, an
             sections=sections,
         )
 
-    # --- Phase 3: Asset Generation (STUB for Phase 4) ---
+    # --- Phase 3: Asset Generation ---
 
     async def _phase_3_generate_assets(
         self, gdd: GameDesignDocument, output_dir: Path,
     ) -> list[GeneratedAsset]:
-        """Parse asset specs from GDD and generate them (stub)."""
-        # Parse asset specs from GDD sections
+        """Parse asset specs from GDD and generate them via AssetService.
+
+        Falls back to placeholder files if no asset service is available
+        or if generation fails for individual assets.
+        """
         specs = self._parse_asset_specs(gdd)
 
         if not specs:
             return []
 
-        # Ensure assets directory exists
         assets_dir = output_dir / "public" / "assets"
         assets_dir.mkdir(parents=True, exist_ok=True)
 
         generated: list[GeneratedAsset] = []
 
+        # Try to use AssetService if available
+        asset_service = getattr(self, "_asset_service", None)
+
         for spec in specs:
-            # Create a placeholder file
             output_path = assets_dir / (spec.key + "." + spec.format)
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Write placeholder (stub)
-            placeholder_content = (
-                f"# Asset: {spec.key}\n"
-                f"# Type: {spec.type}\n"
-                f"# Description: {spec.description}\n"
-                f"# Size: {spec.size}\n"
-                f"# This is a placeholder — full asset generation coming in Phase 4.\n"
-            )
-            output_path.write_text(placeholder_content, encoding="utf-8")
-
-            generated.append(GeneratedAsset(
-                spec=spec,
-                output_path=output_path,
-                provider="placeholder",
-            ))
+            try:
+                if asset_service and spec.type == "image":
+                    start_time = int(time.monotonic() * 1000)
+                    image_path = await asset_service.generate_image(
+                        prompt=spec.description or spec.key,
+                        output_path=output_path,
+                        style="pixel_art",
+                        size=spec.size or "512x512",
+                    )
+                    elapsed = int(time.monotonic() * 1000) - start_time
+                    generated.append(GeneratedAsset(
+                        spec=spec,
+                        output_path=image_path,
+                        generation_time_ms=elapsed,
+                        provider="tongyi" if self.config.image else "placeholder",
+                    ))
+                elif asset_service and spec.type == "audio":
+                    start_time = int(time.monotonic() * 1000)
+                    audio_path = await asset_service.generate_audio(
+                        prompt=spec.description or spec.key,
+                        output_path=output_path,
+                    )
+                    elapsed = int(time.monotonic() * 1000) - start_time
+                    generated.append(GeneratedAsset(
+                        spec=spec,
+                        output_path=audio_path,
+                        generation_time_ms=elapsed,
+                        provider="openai-compat",
+                    ))
+                else:
+                    # Placeholder for video/tileset/spritesheet
+                    placeholder_content = (
+                        f"# Asset: {spec.key}\n"
+                        f"# Type: {spec.type}\n"
+                        f"# Description: {spec.description}\n"
+                        f"# Placeholder — asset generation not available\n"
+                    )
+                    output_path.write_text(placeholder_content, encoding="utf-8")
+                    generated.append(GeneratedAsset(
+                        spec=spec,
+                        output_path=output_path,
+                        generation_time_ms=0,
+                        provider="placeholder",
+                    ))
+            except Exception as e:
+                # Individual asset failure shouldn't block the pipeline
+                placeholder_content = (
+                    f"# Asset: {spec.key}\n"
+                    f"# Error: {e}\n"
+                    f"# This is a fallback placeholder.\n"
+                )
+                output_path.write_text(placeholder_content, encoding="utf-8")
+                generated.append(GeneratedAsset(
+                    spec=spec,
+                    output_path=output_path,
+                    generation_time_ms=0,
+                    provider="error",
+                ))
 
         # Build asset pack
         self._build_asset_pack(generated, assets_dir)
 
         return generated
+
+    def set_asset_service(self, asset_service) -> None:
+        """Inject an AssetService for asset generation.
+
+        Args:
+            asset_service: AssetService instance.
+        """
+        self._asset_service = asset_service
 
     @staticmethod
     def _parse_asset_specs(gdd: GameDesignDocument) -> list[AssetSpec]:
