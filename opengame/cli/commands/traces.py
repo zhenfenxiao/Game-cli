@@ -30,15 +30,20 @@ def list(limit: int = typer.Option(20, "--limit", "-n", help="Number of sessions
 
     table = Table(title=f"Trace Sessions (last {len(sessions)})")
     table.add_column("ID", style="cyan")
+    table.add_column("Type")
     table.add_column("Prompt", style="white")
     table.add_column("Model", style="yellow")
     table.add_column("Status")
     table.add_column("Start")
 
     for s in sessions:
-        status = "[green]✓[/green]" if s["success"] else "[red]✗[/red]"
+        stype = s.get("type", "generate")
+        type_label = "🤖" if stype == "generate" else "💬" if stype == "shell" else stype
+        status = "[green]✓[/green]" if s["success"] else "[red]✗[/red]" if not stype == "shell" else ""
+        if stype == "shell":
+            status = "[dim]saved[/dim]"
         start = s["start"][:19] if s["start"] else "-"
-        table.add_row(str(s["id"]), s["prompt"], s["model"], status, start)
+        table.add_row(str(s["id"]), type_label, s["prompt"], s["model"], status, start)
 
     console.print(table)
 
@@ -59,12 +64,34 @@ def show(session_id: int = typer.Argument(..., help="Session ID to inspect")) ->
     store.close()
 
     # Session header
-    console.print(f"[bold]Session #{session['id']}[/bold]")
+    stype = session.get("session_type", "generate")
+    type_label = "Shell Session" if stype == "shell" else "Game Generation"
+    console.print(f"[bold]Session #{session['id']}[/bold] [dim]({type_label})[/dim]")
     console.print(f"  Prompt: [cyan]{session['prompt']}[/cyan]")
     console.print(f"  Model: {session['model']}")
-    console.print(f"  Success: {'[green]✓[/green]' if session['success'] else '[red]✗[/red]'}")
-    if session["error"]:
+    if stype != "shell":
+        console.print(f"  Success: {'[green]✓[/green]' if session['success'] else '[red]✗[/red]'}")
+    if session.get("error"):
         console.print(f"  Error: [red]{session['error'][:200]}[/red]")
+
+    # For shell sessions, show message stats
+    if stype == "shell":
+        for e in events:
+            data = json.loads(e["data_json"]) if isinstance(e["data_json"], str) else e.get("data_json", {})
+            if e["event_type"] == "shell_snapshot":
+                msgs = data.get("messages", [])
+                console.print(f"  Messages: {len(msgs)}")
+                console.print(f"  Turns: {data.get('turn_count', 0)}")
+                console.print(f"  Project: {data.get('project', '')}")
+                # Show last few messages as preview
+                if msgs:
+                    console.print(f"\n[bold]Last messages:[/bold]")
+                    for m in msgs[-3:]:
+                        role = m.get("role", "?")
+                        content = str(m.get("content", ""))[:150]
+                        console.print(f"  [dim]{role}:[/dim] {content}")
+                break
+        return
 
     # Phase summary
     phases: dict[str, list[dict]] = {}

@@ -22,6 +22,7 @@ from opengame.core.exceptions import UserQuestionRequested
 from opengame.core.interactive_loop import InteractiveLoop, TurnOutcome
 from opengame.core.openai_client import OpenAiClient
 from opengame.tools.factory import create_interactive_tool_registry
+from opengame.tracing.store import TraceStore
 
 console = Console()
 
@@ -304,110 +305,122 @@ def _show_help() -> None:
     console.print(table)
 
 
+def _get_trace_store() -> TraceStore:
+    """Get a TraceStore instance for shell session persistence."""
+    store = TraceStore()
+    store.open()
+    return store
+
+
 def _save_session(loop: InteractiveLoop, root: Path) -> None:
-    """Save the current session to disk."""
+    """Save the current shell session to traces DB."""
     if loop.context is None:
         console.print("[dim]No active session to save.[/dim]")
         return
-    import time
-    save_dir = root / ".opengame" / "shell-sessions"
-    save_dir.mkdir(parents=True, exist_ok=True)
-    ts = int(time.time())
-    path = save_dir / f"session-{ts}.json"
-    data = {
-        "project": str(root),
-        "turn_count": loop.context.turn_count,
-        "messages": loop.context.messages,
-    }
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2))
-    console.print(f"[dim]Session saved to {path}[/dim]")
+
+    store = _get_trace_store()
+    try:
+        # Create a shell-type session or use an existing shell session
+        # First check if we're already in a traced session
+        sid = store.create_session(
+            prompt=f"Shell: {root.name}",
+            model="shell-session",
+            session_type="shell",
+        )
+        store.save_shell_session(
+            session_id=sid,
+            messages=loop.context.messages,
+            turn_count=loop.context.turn_count,
+            project_path=str(root),
+        )
+        console.print(f"[dim]Session saved as trace #{sid} → .opengame/traces/traces.db[/dim]")
+    finally:
+        store.close()
 
 
 def _load_session(loop: InteractiveLoop, root: Path, session_ref: str) -> None:
-    """Load a saved session and restore messages into the loop context."""
-    save_dir = root / ".opengame" / "shell-sessions"
-    session_path = save_dir / session_ref
+    """Load a shell session from traces DB by ID."""
+    store = _get_trace_store()
+    try:
+        # Try as numeric ID first, then search
+        try:
+            sid = int(session_ref)
+        except ValueError:
+            # Search shell sessions by prompt match
+            shells = store.list_shell_sessions(limit=50)
+            sid = None
+            for s in shells:
+                if session_ref.lower() in s["prompt"].lower():
+                    sid = s["id"]
+                    break
+            if sid is None and shells:
+                sid = shells[0]["id"]  # Default to most recent
 
-    # If not a direct path, try matching by name
-    if not session_path.exists():
-        candidates = sorted(save_dir.glob("session-*.json"), reverse=True)
-        for c in candidates:
-            if session_ref in c.name:
-                session_path = c
-                break
-        else:
-            console.print(f"[yellow]Session not found: {session_ref}[/yellow]")
-            console.print(f"[dim]Available sessions in {save_dir}:[/dim]")
-            for c in candidates:
-                console.print(f"  [dim]{c.name}[/dim]")
+        if sid is None:
+            console.print(f"[yellow]No shell sessions found.[/yellow]")
             return
 
-    try:
-        data = json.loads(session_path.read_text())
-    except Exception as e:
-        console.print(f"[red]Failed to load session: {e}[/red]")
-        return
+        data = store.load_shell_session(sid)
+        if data is None:
+            console.print(f"[yellow]Session #{sid} has no saved snapshot.[/yellow]")
+            return
 
-    # Restore messages into context (skip the initial system message)
-    if loop.context is None:
-        console.print("[red]No active loop context.[/red]")
-        return
+        # Restore messages
+        if loop.context is None:
+            return
+        system_msg = loop.context.messages[0] if loop.context.messages else None
+        loop.context.messages = [system_msg] if system_msg else []
+        saved_messages = data.get("messages", [])
+        loop.context.messages.extend(saved_messages[1:] if saved_messages and system_msg else saved_messages)
+        loop.context.turn_count = data.get("turn_count", 0)
 
-    saved_messages = data.get("messages", [])
-    # Replace context messages with saved ones (keep system prompt)
-    system_msg = loop.context.messages[0] if loop.context.messages else None
-    loop.context.messages = [system_msg] if system_msg else []
-    loop.context.messages.extend(saved_messages[1:] if saved_messages and system_msg else saved_messages)
-    loop.context.turn_count = data.get("turn_count", 0)
-
-    console.print(f"[green]Resumed session: {len(saved_messages)} messages, "
-                  f"{data.get('turn_count', 0)} turns[/green]")
+        console.print(f"[green]Resumed session #{sid}: {len(saved_messages)} messages, "
+                      f"{data.get('turn_count', 0)} turns[/green]")
+    finally:
+        store.close()
 
 
 def _list_and_resume(loop: InteractiveLoop, root: Path) -> None:
-    """List saved sessions and prompt user to pick one."""
-    save_dir = root / ".opengame" / "shell-sessions"
-    if not save_dir.exists():
-        console.print("[dim]No saved sessions. Use /save first.[/dim]")
-        return
-
-    sessions = sorted(save_dir.glob("session-*.json"), reverse=True)
-    if not sessions:
-        console.print("[dim]No saved sessions found.[/dim]")
-        return
-
-    from rich.table import Table
-    table = Table(title="Saved Sessions")
-    table.add_column("#", style="cyan")
-    table.add_column("File", style="white")
-    table.add_column("Turns")
-    table.add_column("Messages")
-
-    for i, s in enumerate(sessions[:10], 1):
-        try:
-            d = json.loads(s.read_text())
-            table.add_row(str(i), s.name, str(d.get("turn_count", "?")), str(len(d.get("messages", []))))
-        except Exception:
-            table.add_row(str(i), s.name, "?", "?")
-
-    console.print(table)
-    console.print("[dim]Type the number or filename to resume, or press Enter to cancel.[/dim]")
-
+    """List saved shell sessions and prompt user to pick one."""
+    store = _get_trace_store()
     try:
-        choice = Prompt.ask("[bold]Resume session[/bold]", default="")
-    except (KeyboardInterrupt, EOFError):
-        return
+        sessions = store.list_shell_sessions(limit=20)
+        if not sessions:
+            console.print("[dim]No saved shell sessions. Use /save first.[/dim]")
+            return
 
-    if not choice:
-        return
+        from rich.table import Table
+        table = Table(title="Saved Shell Sessions (in traces)")
+        table.add_column("#", style="cyan")
+        table.add_column("ID")
+        table.add_column("Project")
+        table.add_column("Start")
 
-    # Resolve choice
-    if choice.isdigit() and 1 <= int(choice) <= len(sessions):
-        session_path = sessions[int(choice) - 1]
-    else:
-        session_path = save_dir / choice
+        for i, s in enumerate(sessions[:10], 1):
+            start = s["start"][:19] if s["start"] else "-"
+            table.add_row(str(i), str(s["id"]), s["prompt"][:40], start)
 
-    if session_path.exists():
-        _load_session(loop, root, session_path.name)
-    else:
-        console.print(f"[yellow]Session not found: {choice}[/yellow]")
+        console.print(table)
+        console.print("[dim]Type the number or session ID to resume, or press Enter to cancel.[/dim]")
+        console.print("[dim]Use 'opengame traces list' for full history.[/dim]")
+
+        try:
+            choice = Prompt.ask("[bold]Resume session[/bold]", default="")
+        except (KeyboardInterrupt, EOFError):
+            return
+
+        if not choice:
+            return
+
+        # Resolve choice
+        if choice.isdigit() and 1 <= int(choice) <= len(sessions):
+            sid = sessions[int(choice) - 1]["id"]
+        else:
+            sid = int(choice) if choice.isdigit() else None
+
+        if sid:
+            _load_session(loop, root, str(sid))
+        else:
+            console.print(f"[yellow]Invalid session: {choice}[/yellow]")
+    finally:
+        store.close()

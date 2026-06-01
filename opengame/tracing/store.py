@@ -17,7 +17,8 @@ class TraceStore:
     """SQLite storage for trace sessions and events.
 
     Schema:
-        sessions: id, prompt, model, start_time, end_time, success, error
+        sessions: id, session_type, prompt, model, start_time, end_time,
+                  success, error, metadata_json
         events: id, session_id, seq, phase, event_type, data_json, timestamp
     """
 
@@ -42,12 +43,14 @@ class TraceStore:
 
     def create_session(
         self, prompt: str, model: str, metadata: dict[str, Any] | None = None,
+        session_type: str = "generate",
     ) -> int:
         """Create a new trace session. Returns session_id."""
         now = datetime.now(timezone.utc).isoformat()
         cursor = self._conn.execute(
-            "INSERT INTO sessions (prompt, model, start_time, metadata_json) VALUES (?, ?, ?, ?)",
-            (prompt, model, now, json.dumps(metadata or {}, ensure_ascii=False)),
+            "INSERT INTO sessions (session_type, prompt, model, start_time, metadata_json) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (session_type, prompt, model, now, json.dumps(metadata or {}, ensure_ascii=False)),
         )
         self._conn.commit()
         return cursor.lastrowid
@@ -111,12 +114,79 @@ class TraceStore:
         ).fetchone()
         if row is None:
             return None
+        # Handle both old (8 cols) and new (9 cols with session_type) schema
+        if len(row) >= 9:
+            return {
+                "id": row[0], "session_type": row[1], "prompt": row[2],
+                "model": row[3], "start_time": row[4], "end_time": row[5],
+                "success": bool(row[6]), "error": row[7],
+                "metadata_json": row[8],
+            }
         return {
-            "id": row[0], "prompt": row[1], "model": row[2],
-            "start_time": row[3], "end_time": row[4],
+            "id": row[0], "session_type": "generate", "prompt": row[1],
+            "model": row[2], "start_time": row[3], "end_time": row[4],
             "success": bool(row[5]), "error": row[6],
             "metadata_json": row[7],
         }
+
+    # --- Shell session API ---
+
+    def save_shell_session(
+        self, session_id: int, messages: list[dict[str, Any]],
+        turn_count: int, project_path: str,
+    ) -> None:
+        """Save shell session messages as a single event with full history.
+
+        Uses a 'shell_snapshot' event to store the complete message history.
+        """
+        self.add_event(
+            session_id=session_id,
+            seq=0,
+            phase="shell",
+            event_type="shell_snapshot",
+            data={
+                "messages": messages,
+                "turn_count": turn_count,
+                "project": project_path,
+            },
+        )
+        self._conn.execute(
+            "UPDATE sessions SET end_time = ?, success = 1 WHERE id = ?",
+            (datetime.now(timezone.utc).isoformat(), session_id),
+        )
+        self._conn.commit()
+
+    def load_shell_session(self, session_id: int) -> dict[str, Any] | None:
+        """Load shell session messages from a saved session."""
+        rows = self._conn.execute(
+            "SELECT data_json FROM events WHERE session_id = ? "
+            "AND event_type = 'shell_snapshot' ORDER BY id DESC LIMIT 1",
+            (session_id,),
+        ).fetchall()
+        if not rows:
+            return None
+        data = json.loads(rows[0][0])
+        return {
+            "messages": data.get("messages", []),
+            "turn_count": data.get("turn_count", 0),
+            "project": data.get("project", ""),
+        }
+
+    def list_shell_sessions(self, limit: int = 20) -> list[dict[str, Any]]:
+        """List recent shell sessions with message counts."""
+        rows = self._conn.execute(
+            "SELECT s.id, s.prompt, s.model, s.start_time, s.success, "
+            "(SELECT COUNT(*) FROM events WHERE session_id = s.id "
+            " AND event_type = 'shell_snapshot') "
+            "FROM sessions s WHERE s.session_type = 'shell' "
+            "ORDER BY s.id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [
+            {"id": r[0], "prompt": r[1][:80], "model": r[2],
+             "start": r[3], "has_snapshot": bool(r[4]), "saved": bool(r[5])}
+            for r in rows
+        ]
 
     def get_events(self, session_id: int) -> list[dict[str, Any]]:
         """Get all events for a session, ordered by seq."""
@@ -130,16 +200,23 @@ class TraceStore:
             for r in rows
         ]
 
-    def list_sessions(self, limit: int = 20) -> list[dict[str, Any]]:
-        """List recent sessions."""
-        rows = self._conn.execute(
-            "SELECT id, prompt, model, start_time, end_time, success "
-            "FROM sessions ORDER BY id DESC LIMIT ?",
-            (limit,),
-        ).fetchall()
+    def list_sessions(self, limit: int = 20, session_type: str | None = None) -> list[dict[str, Any]]:
+        """List recent sessions, optionally filtered by type."""
+        if session_type:
+            rows = self._conn.execute(
+                "SELECT id, session_type, prompt, model, start_time, end_time, success "
+                "FROM sessions WHERE session_type = ? ORDER BY id DESC LIMIT ?",
+                (session_type, limit),
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT id, session_type, prompt, model, start_time, end_time, success "
+                "FROM sessions ORDER BY id DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
         return [
-            {"id": r[0], "prompt": r[1][:80], "model": r[2],
-             "start": r[3], "end": r[4], "success": bool(r[5])}
+            {"id": r[0], "type": r[1], "prompt": r[2][:80], "model": r[3],
+             "start": r[4], "end": r[5], "success": bool(r[6])}
             for r in rows
         ]
 
@@ -178,6 +255,7 @@ class TraceStore:
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS sessions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_type TEXT NOT NULL DEFAULT 'generate',
                 prompt TEXT NOT NULL,
                 model TEXT NOT NULL,
                 start_time TEXT NOT NULL,
@@ -187,6 +265,11 @@ class TraceStore:
                 metadata_json TEXT DEFAULT '{}'
             )
         """)
+        # Migrate existing tables: add session_type column if missing
+        try:
+            self._conn.execute("ALTER TABLE sessions ADD COLUMN session_type TEXT NOT NULL DEFAULT 'generate'")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS events (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
