@@ -10,10 +10,12 @@ import json
 from pathlib import Path
 
 import typer
+from prompt_toolkit import PromptSession as PTKPrompt
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.prompt import Prompt
 from rich.syntax import Syntax
 from rich.table import Table
 
@@ -100,12 +102,23 @@ def shell(
     design_mode = design_first
     import asyncio
 
+    # Use prompt_toolkit for proper line editing (backspace, cursor, history)
+    hist_path = root / ".opengame" / ".shell_history"
+    hist_path.parent.mkdir(parents=True, exist_ok=True)
+    ptk_session = PTKPrompt(
+        history=FileHistory(str(hist_path)),
+        style=Style.from_dict({"": "#00ff00 bold"}),
+    )
+
     async def run_interaction() -> None:
         nonlocal design_mode
 
         while True:
             try:
-                user_input = Prompt.ask("\n[bold green]>[/bold green]").strip()
+                user_input = await asyncio.to_thread(
+                    ptk_session.prompt, "> ", multiline=False,
+                )
+                user_input = user_input.strip()
             except (KeyboardInterrupt, EOFError):
                 console.print("\n[dim]Goodbye![/dim]")
                 break
@@ -169,7 +182,10 @@ def shell(
                 elif output.outcome == TurnOutcome.USER_QUESTION:
                     _display_question(output.question)
                     try:
-                        answer = Prompt.ask("[bold yellow]Your answer[/bold yellow]")
+                        answer = await asyncio.to_thread(
+                            ptk_session.prompt, "Your answer > ",
+                            multiline=False,
+                        )
                     except (KeyboardInterrupt, EOFError):
                         answer = "skip"
                     with console.status("[dim]Processing answer...[/dim]"):
@@ -405,7 +421,7 @@ def _list_and_resume(loop: InteractiveLoop, root: Path) -> None:
         console.print("[dim]Use 'opengame traces list' for full history.[/dim]")
 
         try:
-            choice = Prompt.ask("[bold]Resume session[/bold]", default="")
+            choice = PTKPrompt().prompt("Resume session > ", multiline=False)
         except (KeyboardInterrupt, EOFError):
             return
 
