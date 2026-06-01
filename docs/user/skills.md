@@ -186,6 +186,59 @@ opengame generate -p "A platformer with double jump" \
 
 ---
 
+---
+
+## 交互式 Shell
+
+`opengame shell` 进入交互式开发 REPL，类似 Claude Code。Agent 可以读文件、写代码、运行命令，并用 `ask_user` 工具向你提问。
+
+### 设计优先模式（Design-First Mode）
+
+设计优先模式改变了 agent 的工作流程：
+
+- **关闭时**（默认）：agent 收到需求后直接开始读写文件、修改代码
+- **开启时**：agent 先用 `propose_design` 工具输出实现方案（Markdown），**等你 approve 后才开始写代码**
+
+相当于在 agent 动手之前加了一道审查关卡——你可以看到 agent 打算改哪些文件、用什么方案，批准后 agent 才执行。
+
+```bash
+# 启动时开启
+opengame shell ./my-game --design
+
+# 进入后按 /design 切换
+> /design
+Design-first mode: ON
+```
+
+**工作流示例：**
+
+```
+> Add a pause menu with resume and quit buttons
+
+Agent: [calls propose_design]
+  ## Pause Menu Implementation Plan
+  - Modify PlayScene.ts: add pause state, keyboard handler
+  - Create PauseMenu.ts: overlay with Resume/Quit buttons  
+  - Update gameConfig.json: add pause key binding
+  
+  Do you approve? [approve / reject / request changes]
+
+> approve
+
+Agent: [starts implementing files...]
+```
+
+### 可用工具
+
+Shell 环境额外注册了两个交互工具：
+
+| 工具 | 用途 | 触发 |
+|------|------|------|
+| `ask_user` | agent 不确定时向用户提问 | 需求模糊、有多种选择时 |
+| `propose_design` | agent 先出方案再实现 | 设计优先模式或复杂变更 |
+
+---
+
 ## 4 层上下文压缩系统
 
 Agent 会话可能变得很长（数百条消息），TurnLoop 集成了 4 个压缩策略：

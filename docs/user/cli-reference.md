@@ -174,7 +174,7 @@ opengame shell ./my-game --design    # 设计优先模式
 | `/history` | 显示对话统计 |
 | `/save` | 保存 session 到 .opengame/shell-sessions/ |
 
-**设计优先模式**：agent 调用 `propose_design` 工具展示方案→用户 approve→agent 实现。
+**设计优先模式（--design）**： agent 必须先输出实现方案（改哪些文件、用什么方式），等你 approve 后才开始写代码。相当于给 agent 加了一道审查关卡。详见 [技能使用指南](./skills.md#设计优先模式design-first-mode)。
 
 > **当前状态**：✅ 已实现。支持 ask_user 用户提问、propose_design 方案审查。
 
