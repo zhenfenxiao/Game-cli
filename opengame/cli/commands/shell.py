@@ -90,6 +90,7 @@ def shell(
 
     # Initialize interactive loop
     loop = InteractiveLoop(llm_client, tool_registry)
+    loop.set_on_compressed(lambda msg: console.print(f"[dim]📦 {msg}[/dim]"))
     loop.start(system_prompt)
 
     # Resume from saved session if requested

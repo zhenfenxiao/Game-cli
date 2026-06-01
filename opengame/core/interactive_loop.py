@@ -144,6 +144,7 @@ class InteractiveLoop:
                 result = await self.chat_compressor.compress(self._context.messages)
                 if result.status == CompressionStatus.COMPRESSED:
                     self._context.messages = result.new_history
+                    self._compression_occurred(result)
 
             # Call LLM
             tools = self.tool_registry.get_tool_definitions()
@@ -253,6 +254,7 @@ class InteractiveLoop:
                 result = await self.chat_compressor.compress(self._context.messages)
                 if result.status == CompressionStatus.COMPRESSED:
                     self._context.messages = result.new_history
+                    self._compression_occurred(result)
 
             tools = self.tool_registry.get_tool_definitions()
             response = await self.content_generator.generate(
@@ -296,6 +298,20 @@ class InteractiveLoop:
         return TurnOutput(outcome=TurnOutcome.TURN_LIMIT, turn_count=self._context.turn_count)
 
     # --- Private helpers ---
+
+    def set_on_compressed(self, callback) -> None:
+        """Set a callback invoked when compression occurs. Signature: callback(info: str)."""
+        self._on_compressed = callback
+
+    def _compression_occurred(self, result) -> None:
+        """Handle a successful compression."""
+        if hasattr(self, "_on_compressed") and self._on_compressed:
+            tokens_before = result.original_token_count
+            tokens_after = result.summary_token_count
+            pct = int((1 - tokens_after / max(1, tokens_before)) * 100)
+            self._on_compressed(
+                f"Context compressed: ~{tokens_before} → ~{tokens_after} tokens ({pct}% reduction)"
+            )
 
     def _approaching_token_limit(self) -> bool:
         if not self._context:
