@@ -71,6 +71,7 @@ def debug(
 
     # Run debug loop
     import asyncio
+    debug_skill._auto_fix = auto_fix
     result = asyncio.run(debug_skill.debug(
         project_dir=project_path,
         run_dev=False,

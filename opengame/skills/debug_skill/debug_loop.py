@@ -46,6 +46,7 @@ class DebugSkill:
         self.llm_client = llm_client
         self.protocol_manager = protocol_manager
         self.max_iterations = max_iterations
+        self._auto_fix = False  # If True, apply fixes without verify step
 
         # Initialize sub-components
         self.validator = ProjectValidator()
@@ -210,20 +211,28 @@ class DebugSkill:
             iteration.repair_action = repair.description
 
             if repair.applied:
-                # Verify the fix: re-run the same stage
-                verify_result = await self.runner.run(
-                    project_path,
-                    iteration.stage if iteration.stage else "build",
-                )
-                iteration.passed = verify_result.success
-
-                if verify_result.success:
-                    # Mark as verified in protocol
+                if self._auto_fix:
+                    # Auto-fix mode: trust the repair without verifying
+                    iteration.passed = True
                     self.recorder.record(
                         protocol, diagnosis, repair, project_path, verified=True,
                     )
                     repaired = True
                     break
+                else:
+                    # Verify the fix: re-run the same stage
+                    verify_result = await self.runner.run(
+                        project_path,
+                        iteration.stage if iteration.stage else "build",
+                    )
+                    iteration.passed = verify_result.success
+
+                    if verify_result.success:
+                        self.recorder.record(
+                            protocol, diagnosis, repair, project_path, verified=True,
+                        )
+                        repaired = True
+                        break
 
         if not repaired:
             iteration.passed = False

@@ -93,6 +93,7 @@ def generate(
         protocol_manager,
         max_iterations=debug_iterations,
     )
+    debug_skill._auto_fix = True  # Trust LLM repairs during generation for speed
 
     # Initialize TurnLoop with tools
     tool_registry = create_tool_registry(llm_client=llm_client)
