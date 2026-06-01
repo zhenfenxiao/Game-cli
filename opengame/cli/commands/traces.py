@@ -119,7 +119,7 @@ def show(session_id: int = typer.Argument(..., help="Session ID to inspect")) ->
     icons = {
         "phase_start": "▶", "phase_end": "◀", "llm_call": "🤖", "llm_response": "💬",
         "llm_exchange": "🔄", "tool_call": "🔧", "tool_result": "✅",
-        "error": "❌", "debug_iteration": "🪲",
+        "error": "❌", "debug_iteration": "🪲", "compression": "📦",
     }
     for e in events[:100]:
         icon = icons.get(e["event_type"], "•")
@@ -137,6 +137,8 @@ def show(session_id: int = typer.Argument(..., help="Session ID to inspect")) ->
             detail = f" [{data.get('tool_name', '')}]"
         elif e["event_type"] == "tool_result":
             detail = f" [{data.get('tool_name', '')} {'✓' if data.get('success') else '✗'}]"
+        elif e["event_type"] == "compression":
+            detail = f" ~{data.get('tokens_before', '?')}→~{data.get('tokens_after', '?')}tk ({data.get('reduction_pct', '?')}%)"
         elif e["event_type"] == "error":
             detail = f" [red]{data.get('message', '')[:80]}[/red]"
         console.print(f"  {icon} #{e['seq']} {e['event_type']}{detail}")

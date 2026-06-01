@@ -138,6 +138,13 @@ class TurnLoop:
                 result = await self.chat_compressor.compress(self._context.messages)
                 if result.status == CompressionStatus.COMPRESSED:
                     self._context.messages = result.new_history
+                    # Record in trace
+                    if hasattr(self.content_generator, "_tracer") and self.content_generator._tracer:
+                        self.content_generator._tracer.record_compression(
+                            phase="implementation",
+                            tokens_before=result.original_token_count,
+                            tokens_after=result.summary_token_count,
+                        )
 
             # --- Call LLM ---
             tools = self.tool_registry.get_tool_definitions()

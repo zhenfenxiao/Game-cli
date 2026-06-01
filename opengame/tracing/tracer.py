@@ -188,6 +188,21 @@ class TraceSession:
         })
         self._flush()  # Flush immediately on errors
 
+    # --- Compression ---
+
+    def record_compression(
+        self, phase: str, tokens_before: int, tokens_after: int,
+        reduction_pct: int = 0,
+    ) -> None:
+        """Record a context compression event."""
+        self._seq += 1
+        self._emit(phase, "compression", {
+            "tokens_before": tokens_before,
+            "tokens_after": tokens_after,
+            "reduction_pct": reduction_pct,
+        })
+        self._flush()
+
     # --- Debug iteration ---
 
     def debug_iteration(

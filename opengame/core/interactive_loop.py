@@ -299,18 +299,32 @@ class InteractiveLoop:
 
     # --- Private helpers ---
 
+    def set_tracer(self, tracer: Any) -> None:
+        """Inject a TraceSession for recording compression events."""
+        self._tracer = tracer
+
     def set_on_compressed(self, callback) -> None:
         """Set a callback invoked when compression occurs. Signature: callback(info: str)."""
         self._on_compressed = callback
 
     def _compression_occurred(self, result) -> None:
-        """Handle a successful compression."""
+        """Handle a successful compression — notify and record in trace."""
+        tokens_before = result.original_token_count
+        tokens_after = result.summary_token_count
+        pct = int((1 - tokens_after / max(1, tokens_before)) * 100)
+        msg = f"Context compressed: ~{tokens_before} → ~{tokens_after} tokens ({pct}% reduction)"
+
+        # Notify shell callback
         if hasattr(self, "_on_compressed") and self._on_compressed:
-            tokens_before = result.original_token_count
-            tokens_after = result.summary_token_count
-            pct = int((1 - tokens_after / max(1, tokens_before)) * 100)
-            self._on_compressed(
-                f"Context compressed: ~{tokens_before} → ~{tokens_after} tokens ({pct}% reduction)"
+            self._on_compressed(msg)
+
+        # Record in trace if tracer is active
+        if hasattr(self, "_tracer") and self._tracer:
+            self._tracer.record_compression(
+                phase="interactive",
+                tokens_before=tokens_before,
+                tokens_after=tokens_after,
+                reduction_pct=pct,
             )
 
     def _approaching_token_limit(self) -> bool:
