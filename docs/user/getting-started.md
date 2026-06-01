@@ -87,9 +87,25 @@ opengame config validate  # 检查配置完整性
 ## 生成第一个游戏
 
 ```bash
-# 需要有模板目录和 LLM API key
 opengame generate -p "Build a simple Snake clone with WASD controls"
 ```
+
+## 启动游戏
+
+生成的游戏在 `output/` 目录下，是一个标准的 Phaser 3 + TypeScript + Vite 项目。
+
+```bash
+# 进入游戏目录，安装依赖
+cd output
+npm install
+
+# 启动开发服务器（默认 http://localhost:5173）
+npm run dev
+```
+
+浏览器打开 `http://localhost:5173` 即可玩。
+
+> 如果生成时 debug 阶段超限失败，游戏可能仍然可以运行——先试试 `npm run dev`。如果确实有编译错误，用 `opengame debug output --auto-fix` 修复。
 
 ## 运行测试
 

@@ -228,6 +228,23 @@ Agent: [calls propose_design]
 Agent: [starts implementing files...]
 ```
 
+### 快速测试修改
+
+在 shell 中修改代码后，让 agent 帮你构建并启动：
+
+```
+> Build and verify the changes work
+```
+
+Agent 会执行 `npm run build` 检查编译错误。如果要在浏览器中测试：
+
+```bash
+# 另开一个终端
+cd output && npm run dev
+```
+
+浏览器打开 `http://localhost:5173`，每次保存文件后 Vite 会自动热更新。
+
 ### 可用工具
 
 Shell 环境额外注册了两个交互工具：
