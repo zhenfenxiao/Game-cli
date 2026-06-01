@@ -43,6 +43,10 @@ def shell(
         False, "--design", "-d",
         help="Start in design mode: agent proposes plan before implementing",
     ),
+    resume: str | None = typer.Option(
+        None, "--resume", "-r",
+        help="Resume a saved session (session filename or ID)",
+    ),
 ) -> None:
     """Start an interactive game development session.
 
@@ -85,8 +89,12 @@ def shell(
     loop = InteractiveLoop(llm_client, tool_registry)
     loop.start(system_prompt)
 
+    # Resume from saved session if requested
+    if resume:
+        _load_session(loop, root, resume)
+
     # Display header
-    _print_header(root, config.llm.model, design_first)
+    _print_header(root, config.llm.model, design_first, resumed=resume is not None)
 
     design_mode = design_first
     import asyncio
@@ -130,6 +138,9 @@ def shell(
                     continue
                 elif cmd == "save":
                     _save_session(loop, root)
+                    continue
+                elif cmd == "resume":
+                    _list_and_resume(loop, root)
                     continue
                 else:
                     console.print(f"[yellow]Unknown command: /{cmd}. Type /help for help.[/yellow]")
@@ -240,15 +251,20 @@ shell execution, and interactive tools (ask_user, propose_design).
 - Keep responses focused and actionable"""
 
 
-def _print_header(root: Path, model: str, design_first: bool) -> None:
+def _print_header(root: Path, model: str, design_first: bool, resumed: bool = False) -> None:
     """Print the shell header."""
-    design_status = " [yellow](design-first)[/yellow]" if design_first else ""
+    status_parts = []
+    if design_first:
+        status_parts.append("[yellow]design-first[/yellow]")
+    if resumed:
+        status_parts.append("[green]resumed[/green]")
+    status = " (" + ", ".join(status_parts) + ")" if status_parts else ""
     console.print(Panel.fit(
-        f"[bold]OpenGame Interactive Shell[/bold]{design_status}\n"
+        f"[bold]OpenGame Interactive Shell[/bold]{status}\n"
         f"Project: [cyan]{root}[/cyan]\n"
         f"Model: [cyan]{model}[/cyan]\n"
         f"\nType your requests. Special commands:\n"
-        f"  /help • /exit • /clear • /design • /history • /save",
+        f"  /help • /exit • /clear • /design • /history • /save • /resume",
         title="Shell",
         border_style="cyan",
     ))
@@ -305,3 +321,93 @@ def _save_session(loop: InteractiveLoop, root: Path) -> None:
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2))
     console.print(f"[dim]Session saved to {path}[/dim]")
+
+
+def _load_session(loop: InteractiveLoop, root: Path, session_ref: str) -> None:
+    """Load a saved session and restore messages into the loop context."""
+    save_dir = root / ".opengame" / "shell-sessions"
+    session_path = save_dir / session_ref
+
+    # If not a direct path, try matching by name
+    if not session_path.exists():
+        candidates = sorted(save_dir.glob("session-*.json"), reverse=True)
+        for c in candidates:
+            if session_ref in c.name:
+                session_path = c
+                break
+        else:
+            console.print(f"[yellow]Session not found: {session_ref}[/yellow]")
+            console.print(f"[dim]Available sessions in {save_dir}:[/dim]")
+            for c in candidates:
+                console.print(f"  [dim]{c.name}[/dim]")
+            return
+
+    try:
+        data = json.loads(session_path.read_text())
+    except Exception as e:
+        console.print(f"[red]Failed to load session: {e}[/red]")
+        return
+
+    # Restore messages into context (skip the initial system message)
+    if loop.context is None:
+        console.print("[red]No active loop context.[/red]")
+        return
+
+    saved_messages = data.get("messages", [])
+    # Replace context messages with saved ones (keep system prompt)
+    system_msg = loop.context.messages[0] if loop.context.messages else None
+    loop.context.messages = [system_msg] if system_msg else []
+    loop.context.messages.extend(saved_messages[1:] if saved_messages and system_msg else saved_messages)
+    loop.context.turn_count = data.get("turn_count", 0)
+
+    console.print(f"[green]Resumed session: {len(saved_messages)} messages, "
+                  f"{data.get('turn_count', 0)} turns[/green]")
+
+
+def _list_and_resume(loop: InteractiveLoop, root: Path) -> None:
+    """List saved sessions and prompt user to pick one."""
+    save_dir = root / ".opengame" / "shell-sessions"
+    if not save_dir.exists():
+        console.print("[dim]No saved sessions. Use /save first.[/dim]")
+        return
+
+    sessions = sorted(save_dir.glob("session-*.json"), reverse=True)
+    if not sessions:
+        console.print("[dim]No saved sessions found.[/dim]")
+        return
+
+    from rich.table import Table
+    table = Table(title="Saved Sessions")
+    table.add_column("#", style="cyan")
+    table.add_column("File", style="white")
+    table.add_column("Turns")
+    table.add_column("Messages")
+
+    for i, s in enumerate(sessions[:10], 1):
+        try:
+            d = json.loads(s.read_text())
+            table.add_row(str(i), s.name, str(d.get("turn_count", "?")), str(len(d.get("messages", []))))
+        except Exception:
+            table.add_row(str(i), s.name, "?", "?")
+
+    console.print(table)
+    console.print("[dim]Type the number or filename to resume, or press Enter to cancel.[/dim]")
+
+    try:
+        choice = Prompt.ask("[bold]Resume session[/bold]", default="")
+    except (KeyboardInterrupt, EOFError):
+        return
+
+    if not choice:
+        return
+
+    # Resolve choice
+    if choice.isdigit() and 1 <= int(choice) <= len(sessions):
+        session_path = sessions[int(choice) - 1]
+    else:
+        session_path = save_dir / choice
+
+    if session_path.exists():
+        _load_session(loop, root, session_path.name)
+    else:
+        console.print(f"[yellow]Session not found: {choice}[/yellow]")
