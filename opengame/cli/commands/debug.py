@@ -16,11 +16,9 @@ from opengame.cli.config_loader import ConfigLoader
 from opengame.core.openai_client import OpenAiClient
 from opengame.skills.debug_skill import DebugSkill, ProtocolManager
 
-app = typer.Typer(help="Debug a game project")
 console = Console()
 
 
-@app.callback(invoke_without_command=True)
 def debug(
     project_path: Path = typer.Argument(
         ...,

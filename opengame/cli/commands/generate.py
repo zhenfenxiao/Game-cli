@@ -23,11 +23,9 @@ from opengame.tools.factory import create_tool_registry
 from opengame.tracing.store import TraceStore
 from opengame.tracing.tracer import TraceSession
 
-app = typer.Typer(help="Generate a game from a natural language prompt")
 console = Console()
 
 
-@app.callback(invoke_without_command=True)
 def generate(
     prompt: str = typer.Option(
         ...,

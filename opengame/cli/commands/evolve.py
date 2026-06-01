@@ -16,11 +16,9 @@ from opengame.core.openai_client import OpenAiClient
 from opengame.skills.template_skill import TemplateSkill
 from opengame.skills.template_skill.library_manager import LibraryManager
 
-app = typer.Typer(help="Evolve the template library")
 console = Console()
 
 
-@app.callback(invoke_without_command=True)
 def evolve(
     project_path: Path = typer.Argument(
         ...,
