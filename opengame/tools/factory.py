@@ -15,6 +15,7 @@ from opengame.core.tool_registry import ToolRegistry
 from opengame.tools.control_tools import register_control_tools
 from opengame.tools.file_tools import register_file_tools
 from opengame.tools.game_tools import register_game_tools
+from opengame.tools.interactive_tools import register_interactive_tools
 from opengame.tools.memory_tools import register_memory_tools
 from opengame.tools.shell_tools import register_shell_tools
 from opengame.tools.subagent_tool import register_subagent_tool
@@ -59,5 +60,36 @@ def create_tool_registry(
     # Register subagent (needs turn_loop, registered last)
     if turn_loop:
         register_subagent_tool(registry, turn_loop=turn_loop)
+
+    return registry
+
+
+def create_interactive_tool_registry(
+    llm_client: BaseLlmClient | None = None,
+) -> ToolRegistry:
+    """Create a ToolRegistry for interactive shell sessions.
+
+    Includes all standard tools plus interactive tools (ask_user, propose_design).
+    Excludes tools that need a TurnLoop (todo_write, subagent) since the
+    InteractiveLoop manages its own context.
+
+    Args:
+        llm_client: Optional LLM client for AI-dependent tools.
+
+    Returns:
+        Populated ToolRegistry with interactive tools.
+    """
+    registry = ToolRegistry()
+
+    # Standard tools
+    register_shell_tools(registry)
+    register_web_tools(registry)
+    register_memory_tools(registry)
+    register_control_tools(registry)
+    register_file_tools(registry, llm_client=llm_client)
+    register_game_tools(registry, llm_client=llm_client)
+
+    # Interactive tools (ask_user, propose_design)
+    register_interactive_tools(registry)
 
     return registry
