@@ -82,6 +82,7 @@ opengame config validate  # 检查配置完整性
 | `traces list` | 浏览生成历史记录 | ✅ |
 | `traces show <id>` | 查看某次生成的详细 timeline | ✅ |
 | `traces export` | 导出 traces 为 JSON（用于训练） | ✅ |
+| `shell [path]` | 交互式游戏开发 REPL（类 Claude Code） | ✅ |
 
 ## 生成第一个游戏
 

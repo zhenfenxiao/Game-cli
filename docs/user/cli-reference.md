@@ -154,6 +154,32 @@ opengame evolve ./my-game --library ./my-templates
 
 ---
 
+### shell — 交互式开发 ✅
+
+进入游戏项目的交互式开发 REPL，类似 Claude Code。Agent 可以读文件、写代码、运行命令，并用 `ask_user` 工具向你提问。
+
+```bash
+opengame shell ./my-game
+opengame shell ./my-game --design    # 设计优先模式
+```
+
+**交互命令：**
+
+| 命令 | 说明 |
+|------|------|
+| `/exit` | 结束 session |
+| `/help` | 显示可用命令 |
+| `/clear` | 清空对话历史 |
+| `/design` | 切换设计优先模式（agent 先提方案再实现） |
+| `/history` | 显示对话统计 |
+| `/save` | 保存 session 到 .opengame/shell-sessions/ |
+
+**设计优先模式**：agent 调用 `propose_design` 工具展示方案→用户 approve→agent 实现。
+
+> **当前状态**：✅ 已实现。支持 ask_user 用户提问、propose_design 方案审查。
+
+---
+
 ### traces — 轨迹查看 ✅
 
 浏览、查看和导出 agent trace 记录。

@@ -12,6 +12,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
+from opengame.core.exceptions import UserQuestionRequested
+
 
 @dataclass
 class ToolParameter:
@@ -220,6 +222,8 @@ class ToolRegistry:
                 output=output,
                 success=True,
             )
+        except UserQuestionRequested:
+            raise  # Propagate to interactive shell layer
         except Exception as e:
             return ToolResult(
                 call_id=call_id,
