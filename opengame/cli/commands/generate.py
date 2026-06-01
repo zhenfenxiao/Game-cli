@@ -85,7 +85,8 @@ def generate(
     library_manager = LibraryManager(config.game_skill.library_output_dir)
     template_skill = TemplateSkill(llm_client, library_manager)
 
-    protocol_manager = ProtocolManager(config.game_skill.protocol_output_dir)
+    # Protocol stored alongside the generated game so debug can continue later
+    protocol_manager = ProtocolManager(output_dir / ".opengame" / "debug-protocol")
     debug_iterations = max_debug_iterations if max_debug_iterations is not None else config.game_skill.max_debug_iterations
     debug_skill = DebugSkill(
         llm_client,
@@ -159,6 +160,7 @@ def generate(
         console.print(f"  Project: {result.project_dir}")
         console.print(f"  The game may work in browser despite debug phase issues.")
         console.print(f"  To serve: cd {result.project_dir} && npm run dev")
+        console.print(f"  To continue debugging: opengame debug {result.project_dir} --auto-fix")
         if result.error:
             console.print(f"  [dim]Debug: {result.error}[/dim]")
     else:
