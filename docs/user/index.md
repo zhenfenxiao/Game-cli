@@ -21,3 +21,4 @@
 | Phase 4 | Asset Pipeline（图片/音频/视频/AutoTiler） | ✅ |
 | Phase 5 | Integration（端到端管道、Agent Trace） | ✅ |
 | Phase 6 | Bench + Polish（评估、打包） | 📋 |
+| Shell | 交互式游戏开发 REPL（ask_user、propose_design） | ✅ |
