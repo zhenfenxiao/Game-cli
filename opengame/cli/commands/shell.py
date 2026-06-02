@@ -116,8 +116,8 @@ def shell(
 
         while True:
             try:
-                user_input = await asyncio.to_thread(
-                    ptk_session.prompt, "> ", multiline=False,
+                user_input = await ptk_session.prompt_async(
+                    "> ", multiline=False,
                 )
                 user_input = user_input.strip()
             except (KeyboardInterrupt, EOFError):
@@ -155,7 +155,7 @@ def shell(
                     _save_session(loop, root)
                     continue
                 elif cmd == "resume":
-                    _list_and_resume(loop, root)
+                    await _list_and_resume(loop, root)
                     continue
                 else:
                     console.print(f"[yellow]Unknown command: /{cmd}. Type /help for help.[/yellow]")
@@ -183,9 +183,8 @@ def shell(
                 elif output.outcome == TurnOutcome.USER_QUESTION:
                     _display_question(output.question)
                     try:
-                        answer = await asyncio.to_thread(
-                            ptk_session.prompt, "Your answer > ",
-                            multiline=False,
+                        answer = await ptk_session.prompt_async(
+                            "Your answer > ", multiline=False,
                         )
                     except (KeyboardInterrupt, EOFError):
                         answer = "skip"
