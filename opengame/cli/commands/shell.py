@@ -88,13 +88,18 @@ def shell(
     # Build system prompt with project context
     system_prompt = _build_system_prompt(root, design_first)
 
-    # Initialize interactive loop
-    loop = InteractiveLoop(llm_client, tool_registry)
+    # Initialize interactive loop (no max turns — user /exits when done)
+    loop = InteractiveLoop(llm_client, tool_registry, max_turns=99999)
     tool_icons = {"read_file": "📖", "write_file": "📝", "edit": "✏️", "glob": "🔍",
                   "grep": "🔎", "ls": "📂", "shell": "⚡", "ask_user": "❓",
                   "propose_design": "📋", "smart_edit": "🤖✏️"}
-    loop.set_on_tool_call(lambda name, _: console.print(
-        f"  {tool_icons.get(name, '🔧')} [dim]{name}[/dim]"
+    loop.set_on_tool_call(lambda name, args: console.print(
+        f"  {tool_icons.get(name, '🔧')} [dim]{name}[/dim] [dim]{args}[/dim]" if args
+        else f"  {tool_icons.get(name, '🔧')} [dim]{name}[/dim]"
+    ))
+    loop.set_on_tool_result(lambda name, success, preview: console.print(
+        f"    → {'[green]✓[/green]' if success else '[red]✗[/red]'} "
+        f"[dim]{preview[:100]}[/dim]" if preview else ""
     ))
     loop.set_on_compressed(lambda msg: console.print(f"[dim]📦 {msg}[/dim]"))
     loop.start(system_prompt)

@@ -71,7 +71,7 @@ class InteractiveLoop:
         self,
         llm_client: BaseLlmClient,
         tool_registry: ToolRegistry,
-        max_turns: int = 50,
+        max_turns: int = 1000,
         token_limit: int = 128_000,
     ) -> None:
         self.llm_client = llm_client
