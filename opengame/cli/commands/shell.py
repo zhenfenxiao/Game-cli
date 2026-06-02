@@ -92,8 +92,17 @@ def shell(
     debug_skill_proto = DebugSkill(llm_client, protocol_manager)
     protocol_context = _asyncio.run(debug_skill_proto.get_protocol_context())
 
+    # Load template library knowledge
+    from opengame.skills.template_skill import TemplateSkill
+    from opengame.skills.template_skill.library_manager import LibraryManager
+    library_manager = LibraryManager(config.game_skill.library_output_dir)
+    template_skill = TemplateSkill(llm_client, library_manager)
+    template_context = _asyncio.run(template_skill.get_library_summary())
+    if "empty" in template_context.lower():
+        template_context = ""
+
     # Build system prompt with project context
-    system_prompt = _build_system_prompt(root, design_first, protocol_context)
+    system_prompt = _build_system_prompt(root, design_first, protocol_context, template_context)
 
     # Initialize interactive loop (no max turns — user /exits when done)
     loop = InteractiveLoop(llm_client, tool_registry, max_turns=99999)
@@ -229,7 +238,7 @@ def shell(
     asyncio.run(run_interaction())
 
 
-def _build_system_prompt(root: Path, design_first: bool, protocol_context: str = "") -> str:
+def _build_system_prompt(root: Path, design_first: bool, protocol_context: str = "", template_context: str = "") -> str:
     """Build a system prompt with project context."""
     # Gather project info
     files = sorted(str(p.relative_to(root)) for p in root.rglob("*")
@@ -286,6 +295,7 @@ shell execution, and interactive tools (ask_user, propose_design).
 - Keep responses focused and actionable
 
 {protocol_context}
+{template_context}
 """
 
 

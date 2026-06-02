@@ -570,6 +570,11 @@ Follow the 3-layer reading strategy: API summary → targeted source → module 
         if protocol_context:
             system_prompt += "\n" + protocol_context
 
+        # Inject template library knowledge
+        template_context = await self.template_skill.get_library_summary()
+        if template_context and "empty" not in template_context.lower():
+            system_prompt += "\n## Template Library\n" + template_context
+
         user_message = f"""Build the game based on these requirements:
 
 {prompt}
