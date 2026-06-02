@@ -162,16 +162,24 @@ class ConfigLoader:
 
     @staticmethod
     def _load_dotenv_file() -> None:
-        """Load .env file from current directory into os.environ.
+        """Load .env file into os.environ, searching from CWD up to root.
 
         Uses python-dotenv to parse and load environment variables.
         Silently skips if the file doesn't exist or dotenv is unavailable.
         """
         try:
             from dotenv import load_dotenv
-            env_path = Path(".env")
-            if env_path.exists():
-                load_dotenv(env_path, override=False)
+            # Search from CWD up to filesystem root
+            current = Path.cwd()
+            while True:
+                env_path = current / ".env"
+                if env_path.exists():
+                    load_dotenv(env_path, override=False)
+                    return
+                parent = current.parent
+                if parent == current:  # Reached filesystem root
+                    break
+                current = parent
         except ImportError:
             pass  # python-dotenv not installed
 
