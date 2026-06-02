@@ -89,7 +89,8 @@ class InteractiveLoop:
         self._context: AgentContext | None = None
         self._pending_question: UserQuestionRequested | None = None
         self._pending_tool_calls: list[ToolCall] = []
-        self._on_tool_call: Any = None  # callback(tool_name, action)
+        self._on_tool_call: Any = None
+        self._on_tool_result: Any = None
 
     @property
     def context(self) -> AgentContext | None:
@@ -157,10 +158,11 @@ class InteractiveLoop:
 
             content, tool_calls = self._parse_response(response)
 
-            # Notify shell about tool calls
+            # Notify shell about tool calls with args
             if tool_calls and self._on_tool_call:
                 for tc in tool_calls:
-                    self._on_tool_call(tc.name, "call")
+                    args_preview = _preview_args(tc.arguments)
+                    self._on_tool_call(tc.name, args_preview)
 
             # Append assistant message
             assistant_msg: dict[str, Any] = {"role": "assistant", "content": content or ""}
@@ -198,6 +200,9 @@ class InteractiveLoop:
 
             # Append tool results to context
             for tr in tool_results:
+                if self._on_tool_result:
+                    preview = (tr.output or tr.error or "")[:120].replace("\n", " ")
+                    self._on_tool_result(tr.name, tr.success, preview)
                 output = tr.output if tr.success else f"ERROR: {tr.error}"
                 summarized = await self.tool_summarizer.summarize(output)
                 truncated = self.tool_truncator.truncate(summarized, self._context.messages)
@@ -271,10 +276,11 @@ class InteractiveLoop:
 
             content, tool_calls = self._parse_response(response)
 
-            # Notify shell about tool calls
+            # Notify shell about tool calls with args
             if tool_calls and self._on_tool_call:
                 for tc in tool_calls:
-                    self._on_tool_call(tc.name, "call")
+                    args_preview = _preview_args(tc.arguments)
+                    self._on_tool_call(tc.name, args_preview)
 
             assistant_msg: dict[str, Any] = {"role": "assistant", "content": content or ""}
             if tool_calls:
@@ -315,8 +321,12 @@ class InteractiveLoop:
         self._tracer = tracer
 
     def set_on_tool_call(self, callback) -> None:
-        """Set a callback invoked before each tool execution. callback(name, action)."""
+        """Set a callback invoked before each tool execution. callback(name, args)."""
         self._on_tool_call = callback
+
+    def set_on_tool_result(self, callback) -> None:
+        """Set a callback invoked after each tool execution. callback(name, success, output_preview)."""
+        self._on_tool_result = callback
 
     def set_on_compressed(self, callback) -> None:
         """Set a callback invoked when compression occurs. Signature: callback(info: str)."""
@@ -355,3 +365,21 @@ class InteractiveLoop:
     def _format_args(args: dict[str, Any]) -> str:
         import json
         return json.dumps(args, ensure_ascii=False)
+
+
+def _preview_args(args: dict[str, Any]) -> str:
+    """Create a short preview of tool call arguments."""
+    import json
+    parts = []
+    for k, v in args.items():
+        if k in ("content", "new_string", "old_string"):
+            parts.append(f"{k}={str(v)[:40]}...")
+        elif k == "command":
+            parts.append(f"{v}")
+        elif k == "file_path" or k == "path":
+            parts.append(f"{str(v)}")
+        elif k == "query" or k == "pattern":
+            parts.append(f"{k}={str(v)[:30]}")
+        else:
+            parts.append(f"{k}={str(v)[:30]}")
+    return " ".join(parts[:3])
