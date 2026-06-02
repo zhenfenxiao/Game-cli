@@ -109,6 +109,7 @@ class InteractiveLoop:
         self._context.add_message("system", system_prompt)
         self._pending_question = None
         self._pending_tool_calls = []
+        self.token_checker.session_turn_count = 0  # Reset turn counter
 
     async def send_message(self, user_message: str) -> TurnOutput:
         """Send a user message and run one or more turns until resolution.
