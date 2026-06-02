@@ -147,3 +147,60 @@ User Prompt
                 → REPEAT: build → test → diagnose → repair → verify
         → GameResult (success, GDD, assets, debug trace)
 ```
+
+## System Prompt 拼接逻辑
+
+每次 LLM 调用时，系统根据当前上下文动态拼接 prompt。
+
+### opengame generate — Phase 5（代码实现）完整 prompt
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Layer 1: 系统角色                                    │
+│ "You are an expert Phaser 3 game developer..."      │
+├─────────────────────────────────────────────────────┤
+│ Layer 2: 项目信息                                    │
+│ Archetype, Output Dir, Framework, Resolution         │
+├─────────────────────────────────────────────────────┤
+│ Layer 3: GDD 标题                                    │
+│ 来自 Phase 2 生成的 Game Design Document              │
+├─────────────────────────────────────────────────────┤
+│ Layer 4: Debug Protocol（如果有）       ← 动态注入   │
+│ Frequent Errors + Prevention Rules                    │
+│ 来源: .opengame/debug-protocol/protocol.json         │
+├─────────────────────────────────────────────────────┤
+│ Layer 5: Template Library（如果非空）   ← 动态注入   │
+│ Families, archetypes, hooks, file patterns            │
+│ 来源: .opengame/template-library/library.json        │
+├─────────────────────────────────────────────────────┤
+│ Layer 6: 用户 prompt + GDD 引用 + 21 tools            │
+└─────────────────────────────────────────────────────┘
+```
+
+### opengame shell 完整 prompt
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Layer 1: 系统角色                                    │
+│ "You are an expert Phaser 3 + TypeScript dev..."    │
+├─────────────────────────────────────────────────────┤
+│ Layer 2: 项目上下文（自动采集）                       │
+│ package.json(name, scripts), 文件树(30 files), GDD   │
+├─────────────────────────────────────────────────────┤
+│ Layer 3: 设计优先指令（--design 时）                  │
+│ "Before changes, use propose_design first"           │
+├─────────────────────────────────────────────────────┤
+│ Layer 4: Debug Protocol（如果有）       ← 动态注入   │
+│ Layer 5: Template Library（如果非空）   ← 动态注入   │
+├─────────────────────────────────────────────────────┤
+│ Layer 6: 可用工具                                    │
+│ file ops, shell, interactive (ask_user, propose)     │
+└─────────────────────────────────────────────────────┘
+```
+
+### 知识注入来源
+
+| 知识 | 存储位置 | 生成方式 | 加载时机 |
+|------|----------|----------|----------|
+| Debug Protocol | `.opengame/debug-protocol/` | Phase 6 修复记录，≥3 次泛化为规则 | generate Phase 5 / shell 启动 |
+| Template Library | `.opengame/template-library/` | Phase 7 evolve 管道 | generate Phase 5 / shell 启动 |
