@@ -90,6 +90,12 @@ def shell(
 
     # Initialize interactive loop
     loop = InteractiveLoop(llm_client, tool_registry)
+    tool_icons = {"read_file": "📖", "write_file": "📝", "edit": "✏️", "glob": "🔍",
+                  "grep": "🔎", "ls": "📂", "shell": "⚡", "ask_user": "❓",
+                  "propose_design": "📋", "smart_edit": "🤖✏️"}
+    loop.set_on_tool_call(lambda name, _: console.print(
+        f"  {tool_icons.get(name, '🔧')} [dim]{name}[/dim]"
+    ))
     loop.set_on_compressed(lambda msg: console.print(f"[dim]📦 {msg}[/dim]"))
     loop.start(system_prompt)
 

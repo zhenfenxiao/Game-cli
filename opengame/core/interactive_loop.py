@@ -89,6 +89,7 @@ class InteractiveLoop:
         self._context: AgentContext | None = None
         self._pending_question: UserQuestionRequested | None = None
         self._pending_tool_calls: list[ToolCall] = []
+        self._on_tool_call: Any = None  # callback(tool_name, action)
 
     @property
     def context(self) -> AgentContext | None:
@@ -155,6 +156,11 @@ class InteractiveLoop:
             )
 
             content, tool_calls = self._parse_response(response)
+
+            # Notify shell about tool calls
+            if tool_calls and self._on_tool_call:
+                for tc in tool_calls:
+                    self._on_tool_call(tc.name, "call")
 
             # Append assistant message
             assistant_msg: dict[str, Any] = {"role": "assistant", "content": content or ""}
@@ -265,6 +271,11 @@ class InteractiveLoop:
 
             content, tool_calls = self._parse_response(response)
 
+            # Notify shell about tool calls
+            if tool_calls and self._on_tool_call:
+                for tc in tool_calls:
+                    self._on_tool_call(tc.name, "call")
+
             assistant_msg: dict[str, Any] = {"role": "assistant", "content": content or ""}
             if tool_calls:
                 assistant_msg["tool_calls"] = [
@@ -302,6 +313,10 @@ class InteractiveLoop:
     def set_tracer(self, tracer: Any) -> None:
         """Inject a TraceSession for recording compression events."""
         self._tracer = tracer
+
+    def set_on_tool_call(self, callback) -> None:
+        """Set a callback invoked before each tool execution. callback(name, action)."""
+        self._on_tool_call = callback
 
     def set_on_compressed(self, callback) -> None:
         """Set a callback invoked when compression occurs. Signature: callback(info: str)."""
