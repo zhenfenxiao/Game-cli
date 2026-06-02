@@ -119,10 +119,10 @@ Output format:
                     max_tokens=2000,
                 )
                 content = response.content or ""
-            except Exception:
+            except Exception as e:
                 return RepairResult(
                     applied=False,
-                    description=f"LLM call failed for repair of {error.code}",
+                    description=f"LLM call failed for repair of {error.code}: {e}",
                 )
 
             # Parse the response
