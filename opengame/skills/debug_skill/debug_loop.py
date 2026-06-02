@@ -151,8 +151,10 @@ class DebugSkill:
 
             if not build_result.success:
                 if self._on_progress:
-                    self._on_progress(iteration_num, "build", "fail",
-                        "; ".join(e.message[:60] for e in build_result.errors[:2]))
+                    errs = build_result.errors
+                    detail = "; ".join(e.message[:60] for e in errs[:2]) if errs else (build_result.stderr or build_result.stdout)[:120]
+                    self._on_progress(iteration_num, "build", "fail", detail)
+                iter_entry.raw_error = build_result.stderr or build_result.stdout
                 # Diagnose and repair
                 iter_entry = await self._handle_failure(
                     iter_entry, build_result.errors, protocol, project_path,
@@ -226,9 +228,14 @@ class DebugSkill:
             Updated debug iteration.
         """
         if not errors:
-            iteration.passed = False
-            iteration.raw_error = "Unknown error (no parsed errors found)"
-            return iteration
+            # No structured errors parsed — use raw output as a generic error
+            raw = (iteration.raw_error or "")[:500]
+            if not raw.strip():
+                iteration.passed = False
+                return iteration
+            # Create a synthetic ParsedError so LLM can still attempt diagnosis
+            from opengame.skills.debug_skill.types import ParsedError
+            errors = [ParsedError(code="BUILD_FAILED", message=raw)]
 
         # Diagnose all errors
         diagnoses = await self.diagnoser.diagnose(errors, protocol, project_path)
