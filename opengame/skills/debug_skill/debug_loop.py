@@ -56,6 +56,43 @@ class DebugSkill:
         self.recorder = OutcomeRecorder()
         self.generalizer = RuleGeneralizer(llm_client)
 
+    async def get_protocol_context(self) -> str:
+        """Get protocol knowledge formatted for inclusion in system prompts.
+
+        Returns formatted text listing known errors and prevention rules
+        that the LLM agent can use to avoid repeating mistakes.
+        """
+        protocol = await self.protocol_manager.load_or_init()
+        if not protocol.entries and not protocol.rules:
+            return ""
+
+        lines = ["\n## Known Issues & Best Practices (from debug protocol)\n"]
+
+        # Top entries (most frequent errors)
+        if protocol.entries:
+            top = sorted(protocol.entries, key=lambda e: e.occurrences, reverse=True)[:8]
+            if top:
+                lines.append("### Frequent Errors")
+                for entry in top:
+                    if entry.occurrences >= 1:
+                        lines.append(
+                            f"- **{entry.signature.error_code or 'Error'}**: "
+                            f"{entry.root_cause or entry.signature.message_pattern[:100]}\n"
+                            f"  Fix: {entry.fix.get('description', 'see protocol')} "
+                            f"(occurrences: {entry.occurrences})"
+                        )
+
+        # Active prevention rules
+        if protocol.rules:
+            lines.append("\n### Prevention Rules")
+            for rule in protocol.rules[:5]:
+                lines.append(f"- **{rule.name}**: {rule.description}")
+                for check in rule.checks[:2]:
+                    if check.violation_message:
+                        lines.append(f"  - Check: {check.violation_message}")
+
+        return "\n".join(lines) if len(lines) > 1 else ""
+
     async def debug(
         self,
         project_dir: str | Path,

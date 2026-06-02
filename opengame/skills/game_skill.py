@@ -565,6 +565,11 @@ Be specific and detailed. Include concrete control schemes, scoring formulas, an
 Use the available tools to read existing files, write code, and build the game.
 Follow the 3-layer reading strategy: API summary → targeted source → module manual."""
 
+        # Inject debug protocol knowledge
+        protocol_context = await self.debug_skill.get_protocol_context()
+        if protocol_context:
+            system_prompt += "\n" + protocol_context
+
         user_message = f"""Build the game based on these requirements:
 
 {prompt}

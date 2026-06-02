@@ -23,6 +23,7 @@ from opengame.cli.config_loader import ConfigLoader
 from opengame.core.exceptions import UserQuestionRequested
 from opengame.core.interactive_loop import InteractiveLoop, TurnOutcome
 from opengame.core.openai_client import OpenAiClient
+from opengame.skills.debug_skill import DebugSkill, ProtocolManager
 from opengame.tools.factory import create_interactive_tool_registry
 from opengame.tracing.store import TraceStore
 
@@ -85,8 +86,14 @@ def shell(
     # Tool registry with interactive tools
     tool_registry = create_interactive_tool_registry(llm_client=llm_client)
 
+    # Load protocol knowledge
+    protocol_manager = ProtocolManager(root / ".opengame" / "debug-protocol")
+    import asyncio as _asyncio
+    debug_skill_proto = DebugSkill(llm_client, protocol_manager)
+    protocol_context = _asyncio.run(debug_skill_proto.get_protocol_context())
+
     # Build system prompt with project context
-    system_prompt = _build_system_prompt(root, design_first)
+    system_prompt = _build_system_prompt(root, design_first, protocol_context)
 
     # Initialize interactive loop (no max turns — user /exits when done)
     loop = InteractiveLoop(llm_client, tool_registry, max_turns=99999)
@@ -222,7 +229,7 @@ def shell(
     asyncio.run(run_interaction())
 
 
-def _build_system_prompt(root: Path, design_first: bool) -> str:
+def _build_system_prompt(root: Path, design_first: bool, protocol_context: str = "") -> str:
     """Build a system prompt with project context."""
     # Gather project info
     files = sorted(str(p.relative_to(root)) for p in root.rglob("*")
@@ -276,7 +283,10 @@ shell execution, and interactive tools (ask_user, propose_design).
 - Respond in plain text or markdown
 - Show code snippets when relevant
 - Ask clarifying questions when needed
-- Keep responses focused and actionable"""
+- Keep responses focused and actionable
+
+{protocol_context}
+"""
 
 
 def _print_header(root: Path, model: str, design_first: bool, resumed: bool = False) -> None:
