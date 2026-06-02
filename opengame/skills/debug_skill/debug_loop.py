@@ -47,6 +47,7 @@ class DebugSkill:
         self.protocol_manager = protocol_manager
         self.max_iterations = max_iterations
         self._auto_fix = False  # If True, apply fixes without verify step
+        self._on_progress = None  # callback(iteration, stage, action, detail)
 
         # Initialize sub-components
         self.validator = ProjectValidator()
@@ -55,6 +56,10 @@ class DebugSkill:
         self.repairer = ErrorRepairer(llm_client)
         self.recorder = OutcomeRecorder()
         self.generalizer = RuleGeneralizer(llm_client)
+
+    def set_on_progress(self, callback) -> None:
+        """Set callback for debug progress: callback(iteration, stage, action, detail)."""
+        self._on_progress = callback
 
     async def get_protocol_context(self) -> str:
         """Get protocol knowledge formatted for inclusion in system prompts.
@@ -145,6 +150,9 @@ class DebugSkill:
             iter_entry.duration_ms = int((time.monotonic() - iter_start) * 1000)
 
             if not build_result.success:
+                if self._on_progress:
+                    self._on_progress(iteration_num, "build", "fail",
+                        "; ".join(e.message[:60] for e in build_result.errors[:2]))
                 # Diagnose and repair
                 iter_entry = await self._handle_failure(
                     iter_entry, build_result.errors, protocol, project_path,
@@ -246,6 +254,11 @@ class DebugSkill:
                     iteration.new_entry_id = trace_entry["entry_id"]
 
             iteration.repair_action = repair.description
+
+            if self._on_progress:
+                self._on_progress(iteration.iteration, iteration.stage,
+                    "repair",
+                    f"{repair.description[:60]} (applied={repair.applied})")
 
             if repair.applied:
                 if self._auto_fix:

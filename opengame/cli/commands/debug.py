@@ -59,6 +59,16 @@ def debug(
     protocol_dir = project_path / ".opengame" / "debug-protocol"
     protocol_manager = ProtocolManager(protocol_dir)
     debug_skill = DebugSkill(llm_client, protocol_manager, max_iterations=max_iterations)
+    debug_skill._auto_fix = auto_fix
+
+    # Show progress during debug
+    def _debug_progress(iteration, stage, action, detail):
+        icons = {"build": "🔨", "test": "🧪", "fail": "❌", "repair": "🔧"}
+        console.print(
+            f"  #{iteration} {icons.get(stage, stage)} {icons.get(action, action)} "
+            f"[dim]{detail[:100]}[/dim]"
+        )
+    debug_skill._on_progress = _debug_progress
 
     console.print(Panel.fit(
         f"Project: {project_path}\n"
